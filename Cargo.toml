@@ -1,0 +1,14 @@
+[package]
+name = "acid_io"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["std"]
+
+# This should be a weak dependency feature once rust-lang/cargo#8832 is stabilized.
+std = ["alloc", "byteorder/std"]
+alloc = []
+
+[dependencies]
+byteorder = { version = "1", optional = true }
