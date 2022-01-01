@@ -470,7 +470,7 @@ impl Write for &mut [u8] {
         let copy_len = cmp::min(src.len(), self.len());
 
         // Move slice out of self before splitting to appease borrowck.
-        let (dst, rem) = mem::replace(self, &mut []).split_at_mut(copy_len);
+        let (dst, rem) = mem::take(self).split_at_mut(copy_len);
         dst.copy_from_slice(src);
 
         *self = rem;
