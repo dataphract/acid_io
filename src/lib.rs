@@ -525,7 +525,98 @@ pub trait Seek {
     ///
     /// Seeking to a negative offset is considered an error.
     fn seek(&mut self, pos: SeekFrom) -> Result<u64>;
+
+    /// Rewind to the beginning of a stream.
+    ///
+    /// This is a convenience method, equivalent to `seek(SeekFrom::Start(0))`.
+    ///
+    /// # Errors
+    ///
+    /// Rewinding can fail, for example because it might involve flushing a buffer.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use std::io::{Read, Seek, Write};
+    /// use std::fs::OpenOptions;
+    ///
+    /// let mut f = OpenOptions::new()
+    ///     .write(true)
+    ///     .read(true)
+    ///     .create(true)
+    ///     .open("foo.txt").unwrap();
+    ///
+    /// let hello = "Hello!\n";
+    /// write!(f, "{}", hello).unwrap();
+    /// f.rewind().unwrap();
+    ///
+    /// let mut buf = String::new();
+    /// f.read_to_string(&mut buf).unwrap();
+    /// assert_eq!(&buf, hello);
+    /// ```
+    fn rewind(&mut self) -> Result<()> {
+        self.seek(SeekFrom::Start(0))?;
+        Ok(())
+    }
+
+    /// Returns the length of this stream (in bytes).
+    ///
+    /// This method is implemented using up to three seek operations. If this
+    /// method returns successfully, the seek position is unchanged (i.e. the
+    /// position before calling this method is the same as afterwards).
+    /// However, if this method returns an error, the seek position is
+    /// unspecified.
+    ///
+    /// If you need to obtain the length of *many* streams and you don't care
+    /// about the seek position afterwards, you can reduce the number of seek
+    /// operations by simply calling `seek(SeekFrom::End(0))` and using its
+    /// return value (it is also the stream length).
+    ///
+    /// Note that length of a stream can change over time (for example, when
+    /// data is appended to a file). So calling this method multiple times does
+    /// not necessarily return the same length each time.
+    fn stream_len(&mut self) -> Result<u64> {
+        let old_pos = self.stream_position()?;
+        let len = self.seek(SeekFrom::End(0))?;
+
+        // Avoid seeking a third time when we were already at the end of the
+        // stream. The branch is usually way cheaper than a seek operation.
+        if old_pos != len {
+            self.seek(SeekFrom::Start(old_pos))?;
+        }
+
+        Ok(len)
+    }
+
+    /// Returns the current seek position from the start of the stream.
+    ///
+    /// This is equivalent to `self.seek(SeekFrom::Current(0))`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use std::{
+    ///     io::{self, BufRead, BufReader, Seek},
+    ///     fs::File,
+    /// };
+    ///
+    /// fn main() -> io::Result<()> {
+    ///     let mut f = BufReader::new(File::open("foo.txt")?);
+    ///
+    ///     let before = f.stream_position()?;
+    ///     f.read_line(&mut String::new())?;
+    ///     let after = f.stream_position()?;
+    ///
+    ///     println!("The first line was {} bytes long", after - before);
+    ///     Ok(())
+    /// }
+    /// ```
+    fn stream_position(&mut self) -> Result<u64> {
+        self.seek(SeekFrom::Current(0))
+    }
 }
+
+// Cursor ========================================================================================
 
 /// A `Cursor` wraps an in-memory buffer and provides it with a
 /// [`Seek`] implementation.
@@ -779,6 +870,56 @@ impl Write for Cursor<&mut [u8]> {
     #[inline]
     fn flush(&mut self) -> Result<()> {
         Ok(())
+    }
+}
+
+impl<A> Seek for Cursor<A>
+where
+    A: AsRef<[u8]>,
+{
+    fn seek(&mut self, style: SeekFrom) -> Result<u64> {
+        let (base_pos, offset) = match style {
+            SeekFrom::Start(n) => {
+                self.pos = n;
+                return Ok(n);
+            }
+            SeekFrom::End(n) => (self.inner.as_ref().len() as u64, n),
+            SeekFrom::Current(n) => (self.pos, n),
+        };
+
+        // TODO: The standard library does this whole op with a call to
+        // `checked_add_signed`, which is unstable behind `mixed_integer_ops`
+        // (https://github.com/rust-lang/rust/issues/87840). Once (if) that
+        // stabilizes, follow suit here.
+        let end_pos = {
+            let (p, overflowed) = base_pos.overflowing_add(offset as u64);
+
+            // If offset < 0 and the unsigned addition didn't overflow, then
+            // the signed addition would have a negative sum.
+            if overflowed ^ (offset < 0) {
+                None
+            } else {
+                Some(p)
+            }
+        };
+
+        match end_pos {
+            Some(n) => {
+                self.pos = n;
+                Ok(self.pos)
+            }
+            None => Err(Error {
+                kind: ErrorKind::InvalidInput,
+            }),
+        }
+    }
+
+    fn stream_len(&mut self) -> Result<u64> {
+        Ok(self.inner.as_ref().len() as u64)
+    }
+
+    fn stream_position(&mut self) -> Result<u64> {
+        Ok(self.pos)
     }
 }
 
