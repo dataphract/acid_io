@@ -533,27 +533,6 @@ pub trait Seek {
     /// # Errors
     ///
     /// Rewinding can fail, for example because it might involve flushing a buffer.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use std::io::{Read, Seek, Write};
-    /// use std::fs::OpenOptions;
-    ///
-    /// let mut f = OpenOptions::new()
-    ///     .write(true)
-    ///     .read(true)
-    ///     .create(true)
-    ///     .open("foo.txt").unwrap();
-    ///
-    /// let hello = "Hello!\n";
-    /// write!(f, "{}", hello).unwrap();
-    /// f.rewind().unwrap();
-    ///
-    /// let mut buf = String::new();
-    /// f.read_to_string(&mut buf).unwrap();
-    /// assert_eq!(&buf, hello);
-    /// ```
     fn rewind(&mut self) -> Result<()> {
         self.seek(SeekFrom::Start(0))?;
         Ok(())
@@ -591,26 +570,6 @@ pub trait Seek {
     /// Returns the current seek position from the start of the stream.
     ///
     /// This is equivalent to `self.seek(SeekFrom::Current(0))`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use std::{
-    ///     io::{self, BufRead, BufReader, Seek},
-    ///     fs::File,
-    /// };
-    ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = BufReader::new(File::open("foo.txt")?);
-    ///
-    ///     let before = f.stream_position()?;
-    ///     f.read_line(&mut String::new())?;
-    ///     let after = f.stream_position()?;
-    ///
-    ///     println!("The first line was {} bytes long", after - before);
-    ///     Ok(())
-    /// }
-    /// ```
     fn stream_position(&mut self) -> Result<u64> {
         self.seek(SeekFrom::Current(0))
     }
