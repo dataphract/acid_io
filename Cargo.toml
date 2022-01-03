@@ -4,11 +4,18 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["std"]
+default = []
 
-# This should be a weak dependency feature once rust-lang/cargo#8832 is stabilized.
+# byteorder/std should be a weak dependency feature once rust-lang/cargo#8832 is stabilized.
 std = ["alloc", "byteorder/std"]
 alloc = []
 
 [dependencies]
 byteorder = { version = "1", optional = true }
+memchr = "2"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.29", features = ["Win32_Networking_WinSock", "Win32_Foundation"] }

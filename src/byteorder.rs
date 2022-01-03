@@ -1,4 +1,4 @@
-#![cfg(feature = "byteorder")]
+#![cfg(all(not(feature = "std"), feature = "byteorder"))]
 
 //! `acid_io` implementations of `byteorder`'s I/O traits.
 //!
