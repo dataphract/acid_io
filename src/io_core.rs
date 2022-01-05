@@ -3,8 +3,6 @@
 use core::{cmp, fmt, mem, slice};
 
 #[cfg(feature = "alloc")]
-extern crate alloc;
-#[cfg(feature = "alloc")]
 use alloc::{string::String, vec::Vec};
 
 #[cfg(feature = "alloc")]
@@ -194,20 +192,16 @@ impl<T> Take<T> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let f = File::open("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let s = &b"some bytes";
+    /// let handle = s.take(5);
     ///
-    ///     // read at most five bytes
-    ///     let handle = f.take(5);
-    ///
-    ///     println!("limit: {}", handle.limit());
-    ///     Ok(())
-    /// }
+    /// assert_eq!(handle.limit(), 5);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn limit(&self) -> u64 {
         self.limit
@@ -220,21 +214,17 @@ impl<T> Take<T> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let f = File::open("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let s = &b"some bytes";
+    /// let mut handle = s.take(5);
+    /// handle.set_limit(10);
     ///
-    ///     // read at most five bytes
-    ///     let mut handle = f.take(5);
-    ///     handle.set_limit(10);
-    ///
-    ///     assert_eq!(handle.limit(), 10);
-    ///     Ok(())
-    /// }
+    /// assert_eq!(handle.limit(), 10);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn set_limit(&mut self, limit: u64) {
         self.limit = limit;
@@ -244,21 +234,17 @@ impl<T> Take<T> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut file = File::open("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let s = &b"some bytes";
+    /// let mut handle = s.take(5);
+    /// handle.set_limit(10);
     ///
-    ///     let mut buffer = [0; 5];
-    ///     let mut handle = file.take(5);
-    ///     handle.read(&mut buffer)?;
-    ///
-    ///     let file = handle.into_inner();
-    ///     Ok(())
-    /// }
+    /// let inner: &[u8] = handle.into_inner();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn into_inner(self) -> T {
         self.inner
@@ -268,21 +254,17 @@ impl<T> Take<T> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut file = File::open("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let s = &b"some bytes";
+    /// let mut handle = s.take(5);
+    /// handle.set_limit(10);
     ///
-    ///     let mut buffer = [0; 5];
-    ///     let mut handle = file.take(5);
-    ///     handle.read(&mut buffer)?;
-    ///
-    ///     let file = handle.get_ref();
-    ///     Ok(())
-    /// }
+    /// let inner: &&[u8] = handle.get_ref();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_ref(&self) -> &T {
         &self.inner
@@ -296,21 +278,17 @@ impl<T> Take<T> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut file = File::open("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let s = &b"some bytes";
+    /// let mut handle = s.take(5);
+    /// handle.set_limit(10);
     ///
-    ///     let mut buffer = [0; 5];
-    ///     let mut handle = file.take(5);
-    ///     handle.read(&mut buffer)?;
-    ///
-    ///     let file = handle.get_mut();
-    ///     Ok(())
-    /// }
+    /// let inner: &mut &[u8] = handle.get_mut();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_mut(&mut self) -> &mut T {
         &mut self.inner
@@ -349,19 +327,18 @@ impl<T, U> Chain<T, U> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
+    /// use acid_io::Cursor;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut foo_file = File::open("foo.txt")?;
-    ///     let mut bar_file = File::open("bar.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut first = &b"Hello, ";
+    /// let mut second = Cursor::new("world!");
     ///
-    ///     let chain = foo_file.chain(bar_file);
-    ///     let (foo_file, bar_file) = chain.into_inner();
-    ///     Ok(())
-    /// }
+    /// let chain = first.chain(second);
+    /// let (first, second): (&[u8], Cursor<&str>) = chain.into_inner();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn into_inner(self) -> (T, U) {
         (self.first, self.second)
@@ -371,19 +348,18 @@ impl<T, U> Chain<T, U> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
+    /// use acid_io::Cursor;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut foo_file = File::open("foo.txt")?;
-    ///     let mut bar_file = File::open("bar.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut first = &b"Hello, ";
+    /// let mut second = Cursor::new("world!");
     ///
-    ///     let chain = foo_file.chain(bar_file);
-    ///     let (foo_file, bar_file) = chain.get_ref();
-    ///     Ok(())
-    /// }
+    /// let chain = first.chain(second);
+    /// let (first, second): (&&[u8], &Cursor<&str>) = chain.get_ref();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_ref(&self) -> (&T, &U) {
         (&self.first, &self.second)
@@ -397,19 +373,18 @@ impl<T, U> Chain<T, U> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
+    /// use acid_io::Cursor;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut foo_file = File::open("foo.txt")?;
-    ///     let mut bar_file = File::open("bar.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut first = &b"Hello, ";
+    /// let mut second = Cursor::new("world!");
     ///
-    ///     let mut chain = foo_file.chain(bar_file);
-    ///     let (foo_file, bar_file) = chain.get_mut();
-    ///     Ok(())
-    /// }
+    /// let mut chain = first.chain(second);
+    /// let (first, second): (&mut &[u8], &mut Cursor<&str>) = chain.get_mut();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_mut(&mut self) -> (&mut T, &mut U) {
         (&mut self.first, &mut self.second)
@@ -453,9 +428,9 @@ impl<T: Read, U: Read> Read for Chain<T, U> {
 /// Read from [`&str`] because [`&[u8]`][prim@slice] implements `Read`:
 ///
 /// ```no_run
-/// use acid_io::{self as io, Read as _};
+/// use acid_io::prelude::*;
 ///
-/// # fn main() -> io::Result<()> {
+/// # fn main() -> acid_io::Result<()> {
 /// let mut b = "This string will be read".as_bytes();
 /// let mut buffer = [0; 10];
 ///
@@ -562,6 +537,7 @@ pub trait Read {
     /// and coalesce writes into a single buffer for higher performance.
     ///
     /// The default implementation returns `false`.
+    #[doc(hidden)]
     fn is_read_vectored(&self) -> bool {
         false
     }
@@ -587,31 +563,20 @@ pub trait Read {
     ///
     /// # Examples
     ///
-    /// [`File`]s implement `Read`:
-    ///
-    /// [`read()`]: Read::read
-    /// [`Ok(0)`]: Ok
-    /// [`File`]: crate::fs::File
-    ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
-    ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = File::open("foo.txt")?;
-    ///     let mut buffer = Vec::new();
-    ///
-    ///     // read the whole file
-    ///     f.read_to_end(&mut buffer)?;
-    ///     Ok(())
-    /// }
     /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// (See also the [`std::fs::read`] convenience function for reading from a
-    /// file.)
+    /// # fn main() -> acid_io::Result<()> {
+    /// let data = b"Let's read this entire buffer!";
     ///
-    /// [`std::fs::read`]: crate::fs::read
+    /// let mut src = &data[..];
+    /// let mut dst = Vec::new();
+    /// src.read_to_end(&mut dst)?;
+    ///
+    /// assert_eq!(&data[..], &dst);
+    /// # Ok(())
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         io_alloc::default_read_to_end(self, buf)
@@ -633,28 +598,22 @@ pub trait Read {
     ///
     /// # Examples
     ///
-    /// [`File`]s implement `Read`:
-    ///
-    /// [`File`]: crate::fs::File
-    ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
-    ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = File::open("foo.txt")?;
-    ///     let mut buffer = String::new();
-    ///
-    ///     f.read_to_string(&mut buffer)?;
-    ///     Ok(())
-    /// }
     /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// (See also the [`std::fs::read_to_string`] convenience function for
-    /// reading from a file.)
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut buffer = String::new();
     ///
-    /// [`std::fs::read_to_string`]: crate::fs::read_to_string
+    /// let mut valid = &b"Some valid UTF-8"[..];
+    /// valid.read_to_string(&mut buffer)?;
+    ///
+    /// let mut invalid = &b"\xFF\xFF\xFF\xFF"[..];
+    /// assert!(invalid.read_to_string(&mut buffer).is_err());
+    ///
+    /// assert_eq!(buffer, "Some valid UTF-8");
+    /// # Ok(())
+    /// # }
+    /// ```
     #[cfg(feature = "alloc")]
     fn read_to_string(&mut self, buf: &mut String) -> Result<usize> {
         io_alloc::default_read_to_string(self, buf)
@@ -720,32 +679,25 @@ pub trait Read {
     ///
     /// # Examples
     ///
-    /// [`File`]s implement `Read`:
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// [`File`]: crate::fs::File
+    /// # fn main() -> acid_io::Result<()> {
+    /// let bytes = [1, 1, 2, 3, 5, 8, 13, 21];
+    /// let mut r = &bytes[..];
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::Read;
-    /// use std::fs::File;
+    /// { // Use the reader by reference.
+    ///     let mut dst = [0u8; 4];
+    ///     let mut r2 = r.by_ref();
+    ///     r2.read(&mut dst)?;
+    ///     assert_eq!(dst, [1, 1, 2, 3]);
+    /// } // Drop the mutable borrow on the reader.
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = File::open("foo.txt")?;
-    ///     let mut buffer = Vec::new();
-    ///     let mut other_buffer = Vec::new();
-    ///
-    ///     {
-    ///         let reference = f.by_ref();
-    ///
-    ///         // read at most 5 bytes
-    ///         reference.take(5).read_to_end(&mut buffer)?;
-    ///
-    ///     } // drop our &mut reference so we can use f again
-    ///
-    ///     // original file still usable, read the rest
-    ///     f.read_to_end(&mut other_buffer)?;
-    ///     Ok(())
-    /// }
+    /// let mut dst = [0u8; 4];
+    /// r.read(&mut dst)?;
+    /// assert_eq!(dst, [5, 8, 13, 21]);
+    /// # Ok(())
+    /// # }
     /// ```
     fn by_ref(&mut self) -> &mut Self
     where
@@ -757,32 +709,29 @@ pub trait Read {
     /// Transforms this `Read` instance to an [`Iterator`] over its bytes.
     ///
     /// The returned type implements [`Iterator`] where the [`Item`] is
-    /// <code>[Result]<[u8], [io::Error]></code>.
-    /// The yielded item is [`Ok`] if a byte was successfully read and [`Err`]
-    /// otherwise. EOF is mapped to returning [`None`] from this iterator.
+    /// [`Result<u8>`][Result]; The yielded item is [`Ok`] if a byte was
+    /// successfully read and [`Err`] otherwise. EOF is mapped to returning
+    /// [`None`] from this iterator.
     ///
     /// # Examples
-    ///
-    /// [`File`]s implement `Read`:
     ///
     /// [`Item`]: Iterator::Item
     /// [`File`]: crate::fs::File "fs::File"
     /// [Result]: crate::result::Result "Result"
-    /// [io::Error]: self::Error "io::Error"
+    /// [Error]: Error
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = File::open("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut it = "Hi!".as_bytes().bytes();
     ///
-    ///     for byte in f.bytes() {
-    ///         println!("{}", byte.unwrap());
-    ///     }
-    ///     Ok(())
-    /// }
+    /// assert_eq!(it.next().transpose()?, Some(b'H'));
+    /// assert_eq!(it.next().transpose()?, Some(b'i'));
+    /// assert_eq!(it.next().transpose()?, Some(b'!'));
+    /// assert_eq!(it.next().transpose()?, None);
+    /// # Ok(())
+    /// # }
     /// ```
     fn bytes(self) -> Bytes<Self>
     where
@@ -803,23 +752,23 @@ pub trait Read {
     ///
     /// [`File`]: crate::fs::File
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
+    /// use acid_io::Cursor;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f1 = File::open("foo.txt")?;
-    ///     let mut f2 = File::open("bar.txt")?;
+    /// # #[cfg(not(feature = "alloc"))]
+    /// # fn main() -> acid_io::Result<()> { Ok(()) }
+    /// # #[cfg(feature = "alloc")]
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut first = &b"Hello, ";
+    /// let mut second = Cursor::new("world!");
     ///
-    ///     let mut handle = f1.chain(f2);
-    ///     let mut buffer = String::new();
+    /// let mut s = String::new();
+    /// first.chain(second).read_to_string(&mut s)?;
     ///
-    ///     // read the value into a String. We could use any Read method here,
-    ///     // this is just one example.
-    ///     handle.read_to_string(&mut buffer)?;
-    ///     Ok(())
-    /// }
+    /// assert_eq!(s, "Hello, world!");
+    /// # Ok(())
+    /// # }
     /// ```
     fn chain<R: Read>(self, next: R) -> Chain<Self, R>
     where
@@ -840,28 +789,28 @@ pub trait Read {
     /// calls to [`read()`] may succeed.
     ///
     /// # Examples
-    ///
-    /// [`File`]s implement `Read`:
-    ///
-    /// [`File`]: crate::fs::File
+
     /// [`Ok(0)`]: Ok
     /// [`read()`]: Read::read
     ///
-    /// ```no_run
-    /// use std::io;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = File::open("foo.txt")?;
-    ///     let mut buffer = [0; 5];
+    /// # #[cfg(not(feature = "alloc"))]
+    /// # fn main() -> acid_io::Result<()> { Ok(()) }
+    /// # #[cfg(feature = "alloc")]
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut r = &b"Bytes and more bytes";
     ///
-    ///     // read at most five bytes
-    ///     let mut handle = f.take(5);
+    /// // read at most five bytes
+    /// let mut handle = r.take(5);
     ///
-    ///     handle.read(&mut buffer)?;
-    ///     Ok(())
-    /// }
+    /// let mut buffer = Vec::new();
+    /// handle.read_to_end(&mut buffer)?;
+    ///
+    /// assert_eq!(&buffer, &b"Bytes");
+    /// # Ok(())
+    /// # }
     /// ```
     fn take(self, limit: u64) -> Take<Self>
     where
@@ -1114,14 +1063,14 @@ pub trait BufRead {
     ///
     /// # Examples
     ///
-    /// [`std::io::Cursor`][`Cursor`] is a type that implements `BufRead`. In
+    /// [`acid_io::Cursor`][`Cursor`] is a type that implements `BufRead`. In
     /// this example, we use [`Cursor`] to iterate over all hyphen delimited
     /// segments in a byte slice
     ///
     /// ```
-    /// use std::io::{self, BufRead};
+    /// use acid_io::BufRead;
     ///
-    /// let cursor = io::Cursor::new(b"lorem-ipsum-dolor");
+    /// let cursor = acid_io::Cursor::new(b"lorem-ipsum-dolor");
     ///
     /// let mut split_iter = cursor.split(b'-').map(|l| l.unwrap());
     /// assert_eq!(split_iter.next(), Some(b"lorem".to_vec()));
@@ -1150,14 +1099,14 @@ pub trait BufRead {
     ///
     /// # Examples
     ///
-    /// [`std::io::Cursor`][`Cursor`] is a type that implements `BufRead`. In
+    /// [`acid_io::Cursor`][`Cursor`] is a type that implements `BufRead`. In
     /// this example, we use [`Cursor`] to iterate over all the lines in a byte
     /// slice.
     ///
     /// ```
-    /// use std::io::{self, BufRead};
+    /// use acid_io::BufRead;
     ///
-    /// let cursor = io::Cursor::new(b"lorem\nipsum\r\ndolor");
+    /// let cursor = acid_io::Cursor::new(b"lorem\nipsum\r\ndolor");
     ///
     /// let mut lines_iter = cursor.lines().map(|l| l.unwrap());
     /// assert_eq!(lines_iter.next(), Some(String::from("lorem")));
@@ -1262,7 +1211,7 @@ where
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```
 /// use acid_io::{Cursor, Write as _};
 /// # fn main() -> acid_io::Result<()> {
 /// let data = b"some bytes";
@@ -1311,17 +1260,17 @@ pub trait Write {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let mut buffer = File::create("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut dst = [0u8; 16];
     ///
-    ///     // Writes some prefix of the byte string, not necessarily all of it.
-    ///     buffer.write(b"some bytes")?;
-    ///     Ok(())
-    /// }
+    /// dst.as_mut_slice().write(b"some bytes")?;
+    ///
+    /// assert_eq!(&dst[..10], b"some bytes");
+    /// # Ok(())
+    /// # }
     /// ```
     ///
     /// [`Ok(n)`]: Ok
@@ -1338,28 +1287,47 @@ pub trait Write {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::IoSlice;
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
+    /// use acid_io::{Cursor, IoSlice};
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let mut data1 = [1; 8];
-    ///     let mut data2 = [15; 8];
-    ///     let io_slice1 = IoSlice::new(&mut data1);
-    ///     let io_slice2 = IoSlice::new(&mut data2);
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut data1 = [1; 8];
+    /// let mut data2 = [15; 8];
+    /// let io_slice1 = IoSlice::new(&mut data1);
+    /// let io_slice2 = IoSlice::new(&mut data2);
     ///
-    ///     let mut buffer = File::create("foo.txt")?;
+    /// let mut dst = [0u8; 16];
     ///
-    ///     // Writes some prefix of the byte string, not necessarily all of it.
-    ///     buffer.write_vectored(&[io_slice1, io_slice2])?;
-    ///     Ok(())
-    /// }
+    /// dst.as_mut_slice().write_vectored(&[io_slice1, io_slice2])?;
+    /// assert_eq!(&dst[..8], &data1);
+    /// assert_eq!(&dst[8..], &data2);
+    /// # Ok(())
+    /// # }
     /// ```
     ///
     /// [`write`]: Write::write
     fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> Result<usize> {
         default_write_vectored(|b| self.write(b), bufs)
+    }
+
+    /// Determines if this `Write`r has an efficient [`write_vectored`]
+    /// implementation.
+    ///
+    /// If a `Write`r does not override the default [`write_vectored`]
+    /// implementation, code using it may want to avoid the method all together
+    /// and coalesce writes into a single buffer for higher performance.
+    ///
+    /// The default implementation returns `false`.
+    ///
+    /// [`write_vectored`]: Write::write_vectored
+    // TODO(dataphract):
+    // Since this is unstable in std::io, it can't be exposed in our stable
+    // public API. However, the efficiency of std::io's (and thus our) Write
+    // implementations depends on it, so it's important that it be available.
+    #[doc(hidden)]
+    fn is_write_vectored(&self) -> bool {
+        false
     }
 
     /// Flush this output stream, ensuring that all intermediately buffered
@@ -1372,18 +1340,24 @@ pub trait Write {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::prelude::*;
-    /// use std::io::BufWriter;
-    /// use std::fs::File;
+    /// ```
+    /// #[cfg(not(feature = "alloc"))]
+    /// # fn main() -> acid_io::Result<()> { Ok(()) }
+    /// #[cfg(feature = "alloc")]
+    /// # fn main() -> acid_io::Result<()> {
+    /// use acid_io::prelude::*;
+    /// use acid_io::BufWriter;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let mut buffer = BufWriter::new(File::create("foo.txt")?);
+    /// let mut dst = [0u8; 16];
+    /// let mut buffer = BufWriter::new(dst.as_mut_slice());
     ///
-    ///     buffer.write_all(b"some bytes")?;
-    ///     buffer.flush()?;
-    ///     Ok(())
-    /// }
+    /// buffer.write_all(b"some bytes")?;
+    /// buffer.flush()?;
+    /// drop(buffer);
+    ///
+    /// assert_eq!(&dst[..10], b"some bytes");
+    /// # Ok(())
+    /// # }
     /// ```
     fn flush(&mut self) -> Result<()>;
 
@@ -1404,6 +1378,24 @@ pub trait Write {
     /// non-[`ErrorKind::Interrupted`] kind that [`write`] returns.
     ///
     /// [`write`]: Write::write
+    ///
+    /// ```
+    /// use acid_io::prelude::*;
+    ///
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut src = b"some bytes";
+    ///
+    /// let mut large = [0u8; 16];
+    /// large.as_mut_slice().write_all(src)?;
+    ///
+    /// // write_all to a buffer that's not large enough
+    /// let mut small = [0u8; 4];
+    /// let res = small.as_mut_slice().write_all(src);
+    /// assert!(res.is_err());
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
     fn write_all(&mut self, mut buf: &[u8]) -> Result<()> {
         while !buf.is_empty() {
             match self.write(buf) {
@@ -1413,6 +1405,78 @@ pub trait Write {
                     });
                 }
                 Ok(n) => buf = &buf[n..],
+                Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(())
+    }
+
+    /// Attempts to write multiple buffers into this writer.
+    ///
+    /// This method will continuously call [`write_vectored`] until there is no
+    /// more data to be written or an error of non-[`ErrorKind::Interrupted`]
+    /// kind is returned. This method will not return until all buffers have
+    /// been successfully written or such an error occurs. The first error that
+    /// is not of [`ErrorKind::Interrupted`] kind generated from this method
+    /// will be returned.
+    ///
+    /// If the buffer contains no data, this will never call [`write_vectored`].
+    ///
+    /// # Notes
+    ///
+    /// Unlike [`write_vectored`], this takes a *mutable* reference to
+    /// a slice of [`IoSlice`]s, not an immutable one. That's because we need to
+    /// modify the slice to keep track of the bytes already written.
+    ///
+    /// Once this function returns, the contents of `bufs` are unspecified, as
+    /// this depends on how many calls to [`write_vectored`] were necessary. It is
+    /// best to understand this function as taking ownership of `bufs` and to
+    /// not use `bufs` afterwards. The underlying buffers, to which the
+    /// [`IoSlice`]s point (but not the [`IoSlice`]s themselves), are unchanged and
+    /// can be reused.
+    ///
+    /// [`write_vectored`]: Write::write_vectored
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(not(feature = "alloc"))]
+    /// # fn main() -> acid_io::Result<()> { Ok(()) }
+    /// # #[cfg(feature = "alloc")]
+    /// # fn main() -> acid_io::Result<()> {
+    ///
+    /// use acid_io::{Write, IoSlice};
+    ///
+    /// let mut writer = Vec::new();
+    /// let bufs = &mut [
+    ///     IoSlice::new(&[1]),
+    ///     IoSlice::new(&[2, 3]),
+    ///     IoSlice::new(&[4, 5, 6]),
+    /// ];
+    ///
+    /// writer.write_all_vectored(bufs)?;
+    /// // Note: the contents of `bufs` is now undefined, see the Notes section.
+    ///
+    /// assert_eq!(writer, &[1, 2, 3, 4, 5, 6]);
+    /// # Ok(()) }
+    /// ```
+    // TODO(dataphract):
+    // LineWriter depends on this, but it's not stable, so we hide it from the
+    // public API. If/when it's stabilized, remove #[doc(hidden)].
+    #[doc(hidden)]
+    fn write_all_vectored(&mut self, mut bufs: &mut [IoSlice<'_>]) -> Result<()> {
+        // Guarantee that bufs is empty if it contains no data,
+        // to avoid calling write_vectored if there is no data to be written.
+        IoSlice::advance_slices(&mut bufs, 0);
+        while !bufs.is_empty() {
+            match self.write_vectored(bufs) {
+                Ok(0) => {
+                    return Err(Error {
+                        kind: ErrorKind::WriteZero,
+                    });
+                }
+                Ok(n) => IoSlice::advance_slices(&mut bufs, n),
                 Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
                 Err(e) => return Err(e),
             }
@@ -1441,19 +1505,18 @@ pub trait Write {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::prelude::*;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::prelude::*;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let mut buffer = File::create("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut buffer = [0u8; 32];
     ///
-    ///     // this call
-    ///     write!(buffer, "{:.*}", 2, 1.234567)?;
-    ///     // turns into this:
-    ///     buffer.write_fmt(format_args!("{:.*}", 2, 1.234567))?;
-    ///     Ok(())
-    /// }
+    /// // this call
+    /// write!(buffer.as_mut_slice(), "{:.*}", 2, 1.234567)?;
+    /// // turns into this:
+    /// buffer.as_mut_slice().write_fmt(format_args!("{:.*}", 2, 1.234567))?;
+    /// # Ok(())
+    /// # }
     /// ```
     fn write_fmt(&mut self, fmt: fmt::Arguments<'_>) -> Result<()> {
         // Create a shim which translates a Write to a fmt::Write and saves
@@ -1501,19 +1564,19 @@ pub trait Write {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::Write;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::Write;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let mut buffer = File::create("foo.txt")?;
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut buffer = [0u8; 16];
     ///
-    ///     let reference = buffer.by_ref();
+    /// let mut w = buffer.as_mut_slice();
+    /// let reference = w.by_ref();
     ///
-    ///     // we can use reference just like our original buffer
-    ///     reference.write_all(b"some bytes")?;
-    ///     Ok(())
-    /// }
+    /// // we can use reference just like our original buffer
+    /// reference.write_all(b"some bytes")?;
+    /// # Ok(())
+    /// # }
     /// ```
     fn by_ref(&mut self) -> &mut Self
     where
@@ -1524,18 +1587,49 @@ pub trait Write {
 }
 
 impl Write for &mut [u8] {
+    #[inline]
     fn write(&mut self, src: &[u8]) -> Result<usize> {
         let copy_len = cmp::min(src.len(), self.len());
 
         // Move slice out of self before splitting to appease borrowck.
         let (dst, rem) = mem::take(self).split_at_mut(copy_len);
-        dst.copy_from_slice(src);
+        dst.copy_from_slice(&src[..copy_len]);
 
         *self = rem;
 
         Ok(copy_len)
     }
 
+    #[inline]
+    fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> Result<usize> {
+        let mut nwritten = 0;
+        for buf in bufs {
+            nwritten += self.write(buf)?;
+            if self.is_empty() {
+                break;
+            }
+        }
+
+        Ok(nwritten)
+    }
+
+    #[inline]
+    fn is_write_vectored(&self) -> bool {
+        true
+    }
+
+    #[inline]
+    fn write_all(&mut self, data: &[u8]) -> Result<()> {
+        if self.write(data)? == data.len() {
+            Ok(())
+        } else {
+            Err(Error {
+                kind: ErrorKind::WriteZero,
+            })
+        }
+    }
+
+    #[inline]
     fn flush(&mut self) -> Result<()> {
         Ok(())
     }
@@ -1761,9 +1855,8 @@ impl<T> Cursor<T> {
     /// # Examples
     ///
     /// ```
-    /// use std::io::Cursor;
-    /// use std::io::prelude::*;
-    /// use std::io::SeekFrom;
+    /// use acid_io::prelude::*;
+    /// use acid_io::{Cursor, SeekFrom};
     ///
     /// let mut buf = Cursor::new(vec![1, 2, 3, 4, 5]);
     ///
@@ -1784,7 +1877,7 @@ impl<T> Cursor<T> {
     /// # Examples
     ///
     /// ```
-    /// use std::io::Cursor;
+    /// use acid_io::Cursor;
     ///
     /// let mut buf = Cursor::new(vec![1, 2, 3, 4, 5]);
     ///
@@ -1880,10 +1973,37 @@ pub(crate) fn slice_write(pos_mut: &mut u64, slice: &mut [u8], buf: &[u8]) -> Re
     Ok(amt)
 }
 
+#[inline]
+pub(crate) fn slice_write_vectored(
+    pos_mut: &mut u64,
+    slice: &mut [u8],
+    bufs: &[IoSlice<'_>],
+) -> Result<usize> {
+    let mut nwritten = 0;
+    for buf in bufs {
+        let n = slice_write(pos_mut, slice, buf)?;
+        nwritten += n;
+        if n < buf.len() {
+            break;
+        }
+    }
+    Ok(nwritten)
+}
+
 impl Write for Cursor<&mut [u8]> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         slice_write(&mut self.pos, self.inner, buf)
+    }
+
+    #[inline]
+    fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> Result<usize> {
+        slice_write_vectored(&mut self.pos, self.inner, bufs)
+    }
+
+    #[inline]
+    fn is_write_vectored(&self) -> bool {
+        true
     }
 
     #[inline]
