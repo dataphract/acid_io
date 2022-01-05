@@ -20,7 +20,7 @@ pub mod prelude;
 extern crate alloc;
 
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
-pub use io_alloc::{BufReader, Lines, Split};
+pub use io_alloc::{BufReader, BufWriter, IntoInnerError, LineWriter, Lines, Split};
 #[cfg(not(feature = "std"))]
 pub use io_core::{BufRead, Cursor, Error, ErrorKind, Read, Result, Seek, SeekFrom, Write};
 #[cfg(not(feature = "std"))]
