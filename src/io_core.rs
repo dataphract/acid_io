@@ -307,6 +307,37 @@ impl<T: Read> Read for Take<T> {
         self.limit -= n as u64;
         Ok(n)
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (min, max) = self.inner.size_hint();
+
+        (
+            cmp::min(self.limit, min as u64) as usize,
+            max.map(|x| cmp::min(x as u64, self.limit) as usize)
+                .or_else(|| self.limit.try_into().ok()),
+        )
+    }
+}
+
+impl<T: BufRead> BufRead for Take<T> {
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        // Don't call into inner reader at all at EOF because it may still block
+        if self.limit == 0 {
+            return Ok(&[]);
+        }
+
+        let buf = self.inner.fill_buf()?;
+        let cap = cmp::min(buf.len() as u64, self.limit) as usize;
+        Ok(&buf[..cap])
+    }
+
+    fn consume(&mut self, amt: usize) {
+        // Don't let callers reset the limit by passing an overlarge value
+        let amt = cmp::min(amt as u64, self.limit) as usize;
+        self.limit -= amt as u64;
+        self.inner.consume(amt);
+    }
 }
 
 /// Adapter to chain together two readers.
@@ -410,6 +441,40 @@ impl<T: Read, U: Read> Read for Chain<T, U> {
             }
         }
         self.second.read_vectored(bufs)
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (min1, max1) = self.first.size_hint();
+        let (min2, max2) = self.second.size_hint();
+
+        (
+            min1 + min2,
+            max1.map(|x| max2.map(|y| x.checked_add(y)).flatten())
+                .flatten(),
+        )
+    }
+}
+
+impl<T: BufRead, U: BufRead> BufRead for Chain<T, U> {
+    fn fill_buf(&mut self) -> Result<&[u8]> {
+        if !self.done_first {
+            match self.first.fill_buf()? {
+                buf if buf.is_empty() => {
+                    self.done_first = true;
+                }
+                buf => return Ok(buf),
+            }
+        }
+        self.second.fill_buf()
+    }
+
+    fn consume(&mut self, amt: usize) {
+        if !self.done_first {
+            self.first.consume(amt)
+        } else {
+            self.second.consume(amt)
+        }
     }
 }
 
@@ -869,6 +934,42 @@ impl Read for &[u8] {
     #[inline]
     fn is_read_vectored(&self) -> bool {
         true
+    }
+
+    #[inline]
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
+        if buf.len() > self.len() {
+            return Err(Error {
+                kind: ErrorKind::UnexpectedEof,
+            });
+        }
+        let (a, b) = self.split_at(buf.len());
+
+        // First check if the amount of bytes we want to read is small:
+        // `copy_from_slice` will generally expand to a call to `memcpy`, and
+        // for a single byte the overhead is significant.
+        if buf.len() == 1 {
+            buf[0] = a[0];
+        } else {
+            buf.copy_from_slice(a);
+        }
+
+        *self = b;
+        Ok(())
+    }
+
+    #[inline]
+    #[cfg(feature = "alloc")]
+    fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
+        buf.extend_from_slice(*self);
+        let len = self.len();
+        *self = &self[len..];
+        Ok(len)
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.len(), Some(self.len()))
     }
 }
 
