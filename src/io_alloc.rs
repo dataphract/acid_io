@@ -7,7 +7,7 @@ use core::{cmp, fmt, mem, ptr, str};
 
 use crate::{
     io_core, BufRead, Cursor, Error, ErrorKind, IoSlice, IoSliceMut, Read, Result, Seek, SeekFrom,
-    Write,
+    Write, DEFAULT_BUF_SIZE,
 };
 
 // This uses an adaptive system to extend the vector when it fills. We want to
@@ -268,9 +268,6 @@ impl<B: BufRead> Iterator for Lines<B> {
         }
     }
 }
-
-// Exact value copied from std::sys_common::io, which is not exposed publicly.
-const DEFAULT_BUF_SIZE: usize = 8 * 1024;
 
 /// The `BufReader<R>` struct adds buffering to any reader.
 ///
