@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use crate::{BufRead, IoSlice, IoSliceMut, Read, Result, Seek, SeekFrom, Write};
+use crate::{BufRead, ErrorKind, IoSlice, IoSliceMut, Read, Result, Seek, SeekFrom, Write};
 
 /// A reader which is always at EOF.
 ///
@@ -213,5 +213,83 @@ impl Write for &Sink {
 impl fmt::Debug for Sink {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Sink").finish_non_exhaustive()
+    }
+}
+
+/// Copies the entire contents of a reader into a writer.
+///
+/// This function will continuously read data from `reader` and then
+/// write it into `writer` in a streaming fashion until `reader`
+/// returns EOF.
+///
+/// On success, the total number of bytes that were copied from
+/// `reader` to `writer` is returned.
+///
+/// If you’re wanting to copy the contents of one file to another and you’re
+/// working with filesystem paths, see the [`fs::copy`] function.
+///
+/// [`fs::copy`]: crate::fs::copy
+///
+/// # Errors
+///
+/// This function will return an error immediately if any call to [`read`] or
+/// [`write`] returns an error. All instances of [`ErrorKind::Interrupted`] are
+/// handled by this function and the underlying operation is retried.
+///
+/// [`read`]: Read::read
+/// [`write`]: Write::write
+///
+/// # Examples
+///
+/// ```
+/// use std::io;
+///
+/// fn main() -> io::Result<()> {
+///     let mut reader: &[u8] = b"hello";
+///     let mut writer: Vec<u8> = vec![];
+///
+///     io::copy(&mut reader, &mut writer)?;
+///
+///     assert_eq!(&b"hello"[..], &writer[..]);
+///     Ok(())
+/// }
+/// ```
+pub fn copy<R: ?Sized, W: ?Sized>(reader: &mut R, writer: &mut W) -> Result<u64>
+where
+    R: Read,
+    W: Write,
+{
+    // TODO(dataphract): std::io provides a specialized copy impl for BufWriter,
+    // but we don't have access to specialization. Since copy_to is not a method,
+    // the autoref/autoderef specialization tricks don't work in this context.
+    // Adding copy_to to Write causes it to become non-object-safe, which makes
+    // our API incompatible with std.
+    //
+    // As a result, until specialization becomes available, or another
+    // workaround is found, we don't use the specialized impl for BufWriter.
+    //
+    // BufferedCopySpec::copy_to(reader, writer.as_self())
+    stack_buffer_copy(reader, writer)
+}
+
+pub(crate) fn stack_buffer_copy<R: Read + ?Sized, W: Write + ?Sized>(
+    reader: &mut R,
+    writer: &mut W,
+) -> Result<u64> {
+    // TODO(dataphract): std::io uses a MaybeUninit<u8> buffer here, but we
+    // don't have access to Initializer/ReadBuf, so we just zero the array. This
+    // will be a perf hit.
+    let mut buf = [0u8; crate::DEFAULT_BUF_SIZE];
+
+    let mut written = 0;
+    loop {
+        let len = match reader.read(&mut buf) {
+            Ok(0) => return Ok(written),
+            Ok(len) => len,
+            Err(ref e) if e.kind() == ErrorKind::Interrupted => continue,
+            Err(e) => return Err(e),
+        };
+        writer.write_all(&buf)?;
+        written += len as u64;
     }
 }

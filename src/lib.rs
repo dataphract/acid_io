@@ -16,7 +16,7 @@ mod io_slice;
 #[cfg(not(feature = "std"))]
 pub mod prelude;
 #[cfg(not(feature = "std"))]
-mod util;
+pub(crate) mod util;
 
 #[cfg(all(not(feature = "std"), test))]
 mod tests;
@@ -31,9 +31,13 @@ pub use io_core::{BufRead, Cursor, Error, ErrorKind, Read, Result, Seek, SeekFro
 #[cfg(not(feature = "std"))]
 pub use io_slice::{IoSlice, IoSliceMut};
 #[cfg(not(feature = "std"))]
-pub use util::{empty, repeat, sink, Empty, Repeat, Sink};
+pub use util::{copy, empty, repeat, sink, Empty, Repeat, Sink};
 
 #[cfg(feature = "std")]
 pub use std::io::{
     BufRead, BufReader, Bytes, Cursor, Error, ErrorKind, IoSlice, IoSliceMut, Lines, Split,
 };
+
+// Exact value copied from std::sys_common::io, which is not exposed publicly.
+#[cfg(not(feature = "std"))]
+pub(crate) const DEFAULT_BUF_SIZE: usize = 8 * 1024;
