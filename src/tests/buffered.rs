@@ -1074,6 +1074,7 @@ fn single_formatted_write() {
     // writes: "hello, world" and "!\n", because write() has to flush the
     // buffer before attempting to write the last "!\n". write_all shouldn't
     // have this limitation.
+    #[allow(clippy::write_literal)]
     writeln!(&mut writer, "{}, {}!", "hello", "world").unwrap();
     assert_eq!(
         writer.get_ref().events,
