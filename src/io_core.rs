@@ -427,7 +427,7 @@ impl<T: Read, U: Read> Read for Chain<T, U> {
 ///
 /// Read from [`&str`] because [`&[u8]`][prim@slice] implements `Read`:
 ///
-/// ```no_run
+/// ```
 /// use acid_io::prelude::*;
 ///
 /// # fn main() -> acid_io::Result<()> {
@@ -866,7 +866,7 @@ impl Read for &[u8] {
 ///
 /// In-memory buffers implement `BufRead`:
 ///
-/// ```no_run
+/// ```
 /// use acid_io::prelude::*;
 ///
 /// let input = b"Here\nare\nsome\nlines\n";
@@ -1746,7 +1746,7 @@ pub trait Seek {
 ///
 /// [bytes]: crate::slice "slice"
 ///
-/// ```no_run
+/// ```
 /// use acid_io::{self, Read, Seek, SeekFrom, Write};
 ///
 /// // a library function we've written
