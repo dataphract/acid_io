@@ -3,7 +3,9 @@ use alloc::vec;
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use crate::{prelude::*, Cursor, IoSlice, IoSliceMut, SeekFrom};
+#[cfg(feature = "alloc")]
+use crate::IoSliceMut;
+use crate::{prelude::*, Cursor, IoSlice, SeekFrom};
 
 #[cfg(feature = "alloc")]
 #[test]
