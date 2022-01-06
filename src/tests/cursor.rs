@@ -113,7 +113,7 @@ fn test_box_slice_writer_vectored() {
 
 #[test]
 fn test_buf_writer() {
-    let mut buf = [0 as u8; 9];
+    let mut buf = [0u8; 9];
     {
         let mut writer = Cursor::new(&mut buf[..]);
         assert_eq!(writer.position(), 0);
@@ -134,7 +134,7 @@ fn test_buf_writer() {
 
 #[test]
 fn test_buf_writer_vectored() {
-    let mut buf = [0 as u8; 9];
+    let mut buf = [0u8; 9];
     {
         let mut writer = Cursor::new(&mut buf[..]);
         assert_eq!(writer.position(), 0);
@@ -159,7 +159,7 @@ fn test_buf_writer_vectored() {
 
 #[test]
 fn test_buf_writer_seek() {
-    let mut buf = [0 as u8; 8];
+    let mut buf = [0u8; 8];
     {
         let mut writer = Cursor::new(&mut buf[..]);
         assert_eq!(writer.position(), 0);
@@ -187,7 +187,7 @@ fn test_buf_writer_seek() {
 
 #[test]
 fn test_buf_writer_error() {
-    let mut buf = [0 as u8; 2];
+    let mut buf = [0u8; 2];
     let mut writer = Cursor::new(&mut buf[..]);
     assert_eq!(writer.write(&[0]).unwrap(), 1);
     assert_eq!(writer.write(&[0, 0]).unwrap(), 1);
