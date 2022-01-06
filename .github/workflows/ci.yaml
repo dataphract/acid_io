@@ -13,7 +13,6 @@ jobs:
           - alloc
           - std
           - alloc,byteorder
-          - std,byteorder
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -52,7 +51,6 @@ jobs:
           - alloc
           - std
           - alloc,byteorder
-          - std,byteorder
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -76,7 +74,6 @@ jobs:
           - alloc
           - std
           - alloc,byteorder
-          - std,byteorder
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
