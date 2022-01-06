@@ -605,6 +605,15 @@ impl<R: Read> Read for BufReader<R> {
             Ok(string.len())
         }
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (min, max) = self.inner.size_hint();
+
+        (
+            min + self.buffer().len(),
+            max.and_then(|up| self.buffer().len().checked_add(up)),
+        )
+    }
 }
 
 impl<R: Read> BufRead for BufReader<R> {

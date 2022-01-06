@@ -15,6 +15,8 @@ mod io_core;
 mod io_slice;
 #[cfg(not(feature = "std"))]
 pub mod prelude;
+#[cfg(not(feature = "std"))]
+mod util;
 
 #[cfg(all(not(feature = "std"), test))]
 mod tests;
@@ -28,6 +30,8 @@ pub use io_alloc::{BufReader, BufWriter, IntoInnerError, LineWriter, Lines, Spli
 pub use io_core::{BufRead, Cursor, Error, ErrorKind, Read, Result, Seek, SeekFrom, Write};
 #[cfg(not(feature = "std"))]
 pub use io_slice::{IoSlice, IoSliceMut};
+#[cfg(not(feature = "std"))]
+pub use util::{empty, repeat, sink, Empty, Repeat, Sink};
 
 #[cfg(feature = "std")]
 pub use std::io::{
