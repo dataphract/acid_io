@@ -10,6 +10,8 @@ use crate::{BufRead, Cursor, Error, ErrorKind, IoSlice, IoSliceMut, Read, Result
 #[cfg(feature = "alloc")]
 use crate::{BufReader, Seek, SeekFrom, Write};
 
+#[cfg(feature = "alloc")]
+mod buffered;
 mod cursor;
 mod util;
 
