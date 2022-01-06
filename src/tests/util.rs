@@ -1,7 +1,6 @@
 use core::cmp::{max, min};
 
-use crate::prelude::*;
-use crate::{copy, empty, repeat, sink, Empty, Repeat, Result, SeekFrom, Sink};
+use crate::{copy, empty, prelude::*, repeat, sink, Empty, Repeat, Result, SeekFrom, Sink};
 #[cfg(feature = "alloc")]
 use crate::{BufWriter, DEFAULT_BUF_SIZE};
 
