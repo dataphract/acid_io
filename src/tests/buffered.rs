@@ -596,9 +596,9 @@ impl Write for ProgrammableSink {
 
     fn flush(&mut self) -> crate::Result<()> {
         if self.always_flush_error {
-            return Err(Error {
+            Err(Error {
                 kind: ErrorKind::Other,
-            });
+            })
         } else {
             Ok(())
         }
