@@ -836,6 +836,7 @@ impl<R: Read> Read for &mut R {
 }
 
 impl Read for &[u8] {
+    #[inline]
     fn read(&mut self, dst: &mut [u8]) -> Result<usize> {
         let copy_len = cmp::min(dst.len(), self.len());
         let (src, rem) = self.split_at(copy_len);
@@ -850,6 +851,24 @@ impl Read for &[u8] {
         *self = rem;
 
         Ok(copy_len)
+    }
+
+    #[inline]
+    fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> Result<usize> {
+        let mut nread = 0;
+        for buf in bufs {
+            nread += self.read(buf)?;
+            if self.is_empty() {
+                break;
+            }
+        }
+
+        Ok(nread)
+    }
+
+    #[inline]
+    fn is_read_vectored(&self) -> bool {
+        true
     }
 }
 
@@ -1772,6 +1791,7 @@ pub trait Seek {
 ///     assert_eq!(&buf.get_ref()[5..15], &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 /// }
 /// ```
+#[derive(Debug, Default, Eq, PartialEq)]
 pub struct Cursor<T> {
     pub(crate) inner: T,
     pub(crate) pos: u64,
@@ -1826,7 +1846,7 @@ impl<T> Cursor<T> {
     ///
     /// let reference = buf.get_ref();
     /// ```
-    pub fn get_ref(&self) -> &T {
+    pub const fn get_ref(&self) -> &T {
         &self.inner
     }
 
@@ -1954,6 +1974,22 @@ where
         let n = Read::read(&mut self.remaining_slice(), buf)?;
         self.pos += n as u64;
         Ok(n)
+    }
+
+    fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> Result<usize> {
+        let mut nread = 0;
+        for buf in bufs {
+            let n = self.read(buf)?;
+            nread += n;
+            if n < buf.len() {
+                break;
+            }
+        }
+        Ok(nread)
+    }
+
+    fn is_read_vectored(&self) -> bool {
+        true
     }
 
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {

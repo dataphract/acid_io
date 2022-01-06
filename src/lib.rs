@@ -16,6 +16,9 @@ mod io_slice;
 #[cfg(not(feature = "std"))]
 pub mod prelude;
 
+#[cfg(test)]
+mod tests;
+
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 
