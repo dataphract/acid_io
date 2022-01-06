@@ -296,20 +296,19 @@ const DEFAULT_BUF_SIZE: usize = 8 * 1024;
 ///
 /// # Examples
 ///
-/// ```no_run
-/// use std::io::prelude::*;
-/// use std::io::BufReader;
-/// use std::fs::File;
+/// ```
+/// use acid_io::prelude::*;
+/// use acid_io::BufReader;
 ///
-/// fn main() -> std::io::Result<()> {
-///     let f = File::open("log.txt")?;
-///     let mut reader = BufReader::new(f);
+/// # fn main() -> acid_io::Result<()> {
+/// let text = "Some\nlines\nof\ntext\n";
+/// let mut reader = BufReader::new(text.as_bytes());
 ///
-///     let mut line = String::new();
-///     let len = reader.read_line(&mut line)?;
-///     println!("First line is {} bytes long", len);
-///     Ok(())
-/// }
+/// let mut line = String::new();
+/// reader.read_line(&mut line)?;
+/// assert_eq!(line, "Some\n");
+/// # Ok(())
+/// # }
 /// ```
 pub struct BufReader<R> {
     inner: R,
@@ -324,15 +323,14 @@ impl<R: Read> BufReader<R> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufReader;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::BufReader;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f = File::open("log.txt")?;
-    ///     let reader = BufReader::new(f);
-    ///     Ok(())
-    /// }
+    /// # fn main() -> acid_io::Result<()> {
+    /// let src: [u8; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
+    /// let reader = BufReader::new(src.as_slice());
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new(inner: R) -> BufReader<R> {
         BufReader::with_capacity(DEFAULT_BUF_SIZE, inner)
@@ -344,15 +342,14 @@ impl<R: Read> BufReader<R> {
     ///
     /// Creating a buffer with ten bytes of capacity:
     ///
-    /// ```no_run
-    /// use std::io::BufReader;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::BufReader;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f = File::open("log.txt")?;
-    ///     let reader = BufReader::with_capacity(10, f);
-    ///     Ok(())
-    /// }
+    /// # fn main() -> acid_io::Result<()> {
+    /// let src = "Some data to be buffered while reading";
+    /// let reader = BufReader::with_capacity(10, src.as_bytes());
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn with_capacity(capacity: usize, inner: R) -> BufReader<R> {
         // TODO(dataphract):
@@ -364,9 +361,10 @@ impl<R: Read> BufReader<R> {
         // inner.initializer().initialize(&mut buf);
         // ```
         //
-        // We don't have stable access to the initializer API and it's unlikely
-        // to be stabilized, so instead we create a zeroed Vec and turn that
-        // into a boxed slice.
+        // We don't have stable access to the initializer API (and it's unlikely
+        // to be stabilized), so instead we create a zeroed Vec and turn that
+        // into a boxed slice. When `ReadBuf` becomes available, use that
+        // instead.
         BufReader {
             inner,
             buf: vec![0; capacity].into_boxed_slice(),
@@ -383,17 +381,16 @@ impl<R> BufReader<R> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufReader;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::BufReader;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f1 = File::open("log.txt")?;
-    ///     let reader = BufReader::new(f1);
+    /// # fn main() -> acid_io::Result<()> {
+    /// let text = "Hello, world!";
+    /// let reader = BufReader::new(text.as_bytes());
     ///
-    ///     let f2 = reader.get_ref();
-    ///     Ok(())
-    /// }
+    /// let r2 = reader.get_ref();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_ref(&self) -> &R {
         &self.inner
@@ -405,17 +402,16 @@ impl<R> BufReader<R> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufReader;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::BufReader;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f1 = File::open("log.txt")?;
-    ///     let mut reader = BufReader::new(f1);
+    /// # fn main() -> acid_io::Result<()> {
+    /// let text = "Hello, world!";
+    /// let mut reader = BufReader::new(text.as_bytes());
     ///
-    ///     let f2 = reader.get_mut();
-    ///     Ok(())
-    /// }
+    /// let r2 = reader.get_mut();
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn get_mut(&mut self) -> &mut R {
         &mut self.inner
@@ -429,20 +425,19 @@ impl<R> BufReader<R> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::{BufReader, BufRead};
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::{BufReader, BufRead};
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f = File::open("log.txt")?;
-    ///     let mut reader = BufReader::new(f);
-    ///     assert!(reader.buffer().is_empty());
+    /// # fn main() -> acid_io::Result<()> {
+    /// let text = "Buffer me, please!";
+    /// let mut reader = BufReader::new(text.as_bytes());
+    /// assert!(reader.buffer().is_empty());
     ///
-    ///     if reader.fill_buf()?.len() > 0 {
-    ///         assert!(!reader.buffer().is_empty());
-    ///     }
-    ///     Ok(())
+    /// if reader.fill_buf()?.len() > 0 {
+    ///     assert!(!reader.buffer().is_empty());
     /// }
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn buffer(&self) -> &[u8] {
         &self.buf[self.pos..self.cap]
@@ -452,19 +447,16 @@ impl<R> BufReader<R> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::{BufReader, BufRead};
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::{BufReader, BufRead};
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f = File::open("log.txt")?;
-    ///     let mut reader = BufReader::new(f);
+    /// # fn main() -> acid_io::Result<()> {
+    /// let data = [0u8; 128];
+    /// let reader = BufReader::with_capacity(64, data.as_slice());
     ///
-    ///     let capacity = reader.capacity();
-    ///     let buffer = reader.fill_buf()?;
-    ///     assert!(buffer.len() <= capacity);
-    ///     Ok(())
-    /// }
+    /// assert_eq!(reader.capacity(), 64);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn capacity(&self) -> usize {
         self.buf.len()
@@ -477,17 +469,16 @@ impl<R> BufReader<R> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufReader;
-    /// use std::fs::File;
+    /// ```
+    /// use acid_io::{BufReader, Cursor};
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let f1 = File::open("log.txt")?;
-    ///     let reader = BufReader::new(f1);
+    /// # fn main() -> acid_io::Result<()> {
+    /// let curs = Cursor::new(b"Some data being read by a cursor".as_slice());
+    /// let reader = BufReader::new(curs);
     ///
-    ///     let f2 = reader.into_inner();
-    ///     Ok(())
-    /// }
+    /// let curs: Cursor<_> = reader.into_inner();
+    /// Ok(())
+    /// # }
     /// ```
     pub fn into_inner(self) -> R {
         self.inner
@@ -664,7 +655,7 @@ impl<R: Seek> Seek for BufReader<R> {
     ///
     /// To seek without discarding the internal buffer, use [`BufReader::seek_relative`].
     ///
-    /// See [`std::io::Seek`] for more details.
+    /// See [`acid_io::Seek`] for more details.
     ///
     /// Note: In the edge case where you're seeking with <code>[SeekFrom::Current]\(n)</code>
     /// where `n` minus the internal buffer length overflows an `i64`, two
@@ -672,7 +663,7 @@ impl<R: Seek> Seek for BufReader<R> {
     /// [`Err`], the underlying reader will be left at the same position it would
     /// have if you called `seek` with <code>[SeekFrom::Current]\(0)</code>.
     ///
-    /// [`std::io::Seek`]: Seek
+    /// [`acid_io::Seek`]: Seek
     fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
         let result: u64;
         if let SeekFrom::Current(n) = pos {
@@ -716,22 +707,20 @@ impl<R: Seek> Seek for BufReader<R> {
     ///
     /// # Example
     ///
-    /// ```no_run
-    /// use std::{
-    ///     io::{self, BufRead, BufReader, Seek},
-    ///     fs::File,
-    /// };
+    /// ```
+    /// use acid_io::{BufRead, BufReader, Cursor, Seek};
     ///
-    /// fn main() -> io::Result<()> {
-    ///     let mut f = BufReader::new(File::open("foo.txt")?);
+    /// # fn main() -> acid_io::Result<()> {
+    /// let text = "Lorem ipsum\ndolor sit amet\n";
+    /// let mut reader = BufReader::new(Cursor::new(text.as_bytes()));
     ///
-    ///     let before = f.stream_position()?;
-    ///     f.read_line(&mut String::new())?;
-    ///     let after = f.stream_position()?;
+    /// let before = reader.stream_position()?;
+    /// reader.read_line(&mut String::new())?;
+    /// let after = reader.stream_position()?;
     ///
-    ///     println!("The first line was {} bytes long", after - before);
-    ///     Ok(())
-    /// }
+    /// assert_eq!(after - before, "Lorem ipsum\n".len() as u64);
+    /// # Ok(())
+    /// # }
     /// ```
     fn stream_position(&mut self) -> Result<u64> {
         let remainder = (self.cap - self.pos) as u64;
@@ -749,23 +738,27 @@ impl<R: Seek> Seek for BufReader<R> {
 ///
 /// # Examples
 ///
-/// ```no_run
-/// use std::io::BufWriter;
-/// use std::net::TcpStream;
+/// ```
+/// use acid_io::{BufWriter, Write};
 ///
-/// let mut stream = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+/// # fn main() -> acid_io::Result<()> {
+/// let mut writer = BufWriter::new(Vec::new());
 ///
-/// // do stuff with the stream
+/// // do stuff with the vec
+/// writer.write_all("I live in a vector now!".as_bytes())?;
 ///
-/// // we want to get our `TcpStream` back, so let's try:
+/// // we want to get our `Vec` back, so let's try:
 ///
-/// let stream = match stream.into_inner() {
-///     Ok(s) => s,
+/// let buf = match writer.into_inner() {
+///     Ok(b) => b,
 ///     Err(e) => {
 ///         // Here, e is an IntoInnerError
 ///         panic!("An error occurred");
 ///     }
 /// };
+/// # Ok(())
+/// # }
+///
 /// ```
 #[derive(Debug)]
 pub struct IntoInnerError<W>(W, Error);
@@ -790,27 +783,26 @@ impl<W> IntoInnerError<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::{BufWriter, Write};
     ///
-    /// let mut stream = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut writer = BufWriter::new(Vec::new());
     ///
-    /// // do stuff with the stream
+    /// // do stuff with the vec
+    /// writer.write_all("I live in a vector now!".as_bytes())?;
     ///
-    /// // we want to get our `TcpStream` back, so let's try:
+    /// // we want to get our `Vec` back, so let's try:
     ///
-    /// let stream = match stream.into_inner() {
-    ///     Ok(s) => s,
+    /// let buf = match writer.into_inner() {
+    ///     Ok(b) => b,
     ///     Err(e) => {
-    ///         // Here, e is an IntoInnerError, let's log the inner error.
-    ///         //
-    ///         // We'll just 'log' to stdout for this example.
-    ///         println!("{}", e.error());
-    ///
-    ///         panic!("An unexpected error occurred.");
+    ///         // Here, e is an IntoInnerError
+    ///         panic!("An error occurred: {}", e.error());
     ///     }
     /// };
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn error(&self) -> &Error {
         &self.1
@@ -823,28 +815,28 @@ impl<W> IntoInnerError<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::{BufWriter, Write};
     ///
-    /// let mut stream = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// # fn main() -> acid_io::Result<()> {
+    /// let mut writer = BufWriter::new(Vec::new());
     ///
-    /// // do stuff with the stream
+    /// // do stuff with the vec
+    /// writer.write_all("I live in a vector now!".as_bytes())?;
     ///
-    /// // we want to get our `TcpStream` back, so let's try:
+    /// // we want to get our `Vec` back, so let's try:
     ///
-    /// let stream = match stream.into_inner() {
-    ///     Ok(s) => s,
+    /// let buf = match writer.into_inner() {
+    ///     Ok(b) => b,
     ///     Err(e) => {
-    ///         // Here, e is an IntoInnerError, let's re-examine the buffer:
-    ///         let buffer = e.into_inner();
-    ///
-    ///         // do stuff to try to recover
-    ///
-    ///         // afterwards, let's just return the stream
-    ///         buffer.into_inner().unwrap()
+    ///         // Get the writer back after an error:
+    ///         let w: BufWriter<_> = e.into_inner();
+    ///         // And unwrap the buffer:
+    ///         w.into_inner().unwrap()
     ///     }
     /// };
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn into_inner(self) -> W {
         self.0
@@ -856,7 +848,7 @@ impl<W> IntoInnerError<W> {
     ///
     /// # Example
     /// ```
-    /// use std::io::{BufWriter, ErrorKind, Write};
+    /// use acid_io::{BufWriter, ErrorKind, Write};
     ///
     /// let mut not_enough_space = [0u8; 10];
     /// let mut stream = BufWriter::new(not_enough_space.as_mut());
@@ -877,7 +869,7 @@ impl<W> IntoInnerError<W> {
     ///
     /// # Example
     /// ```
-    /// use std::io::{BufWriter, ErrorKind, Write};
+    /// use acid_io::{BufWriter, ErrorKind, Write};
     ///
     /// let mut not_enough_space = [0u8; 10];
     /// let mut stream = BufWriter::new(not_enough_space.as_mut());
@@ -924,42 +916,6 @@ impl<W> fmt::Display for IntoInnerError<W> {
 /// ensures that the buffer is empty and thus dropping will not even attempt
 /// file operations.
 ///
-/// # Examples
-///
-/// Let's write the numbers one through ten to a [`TcpStream`]:
-///
-/// ```no_run
-/// use std::io::prelude::*;
-/// use std::net::TcpStream;
-///
-/// let mut stream = TcpStream::connect("127.0.0.1:34254").unwrap();
-///
-/// for i in 0..10 {
-///     stream.write(&[i+1]).unwrap();
-/// }
-/// ```
-///
-/// Because we're not buffering, we write each one in turn, incurring the
-/// overhead of a system call per byte written. We can fix this with a
-/// `BufWriter<W>`:
-///
-/// ```no_run
-/// use std::io::prelude::*;
-/// use std::io::BufWriter;
-/// use std::net::TcpStream;
-///
-/// let mut stream = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
-///
-/// for i in 0..10 {
-///     stream.write(&[i+1]).unwrap();
-/// }
-/// stream.flush().unwrap();
-/// ```
-///
-/// By wrapping the stream with a `BufWriter<W>`, these ten writes are all grouped
-/// together by the buffer and will all be written out in one system call when
-/// the `stream` is flushed.
-///
 // HACK(#78696): can't use `crate` for associated items
 /// [`TcpStream::write`]: super::super::super::net::TcpStream::write
 /// [`TcpStream`]: crate::net::TcpStream
@@ -983,11 +939,11 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::{BufWriter, Cursor};
     ///
-    /// let mut buffer = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// let buf: Vec<u8> = Vec::new();
+    /// let mut writer = BufWriter::new(Cursor::new(buf));
     /// ```
     pub fn new(inner: W) -> BufWriter<W> {
         BufWriter::with_capacity(DEFAULT_BUF_SIZE, inner)
@@ -997,14 +953,13 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// Creating a buffer with a buffer of a hundred bytes.
+    /// Creating a writer with a buffer of a hundred bytes.
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::{BufWriter, Cursor};
     ///
-    /// let stream = TcpStream::connect("127.0.0.1:34254").unwrap();
-    /// let mut buffer = BufWriter::with_capacity(100, stream);
+    /// let buf: Vec<u8> = Vec::new();
+    /// let mut writer = BufWriter::with_capacity(100, Cursor::new(buf));
     /// ```
     pub fn with_capacity(capacity: usize, inner: W) -> BufWriter<W> {
         BufWriter {
@@ -1098,14 +1053,13 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::BufWriter;
     ///
-    /// let mut buffer = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// let mut buffer = BufWriter::new(Vec::new());
     ///
     /// // we can use reference just like buffer
-    /// let reference = buffer.get_ref();
+    /// let reference: &Vec<u8> = buffer.get_ref();
     /// ```
     pub fn get_ref(&self) -> &W {
         &self.inner
@@ -1117,14 +1071,13 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::BufWriter;
     ///
-    /// let mut buffer = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// let mut buffer = BufWriter::new(Vec::new());
     ///
     /// // we can use reference just like buffer
-    /// let reference = buffer.get_mut();
+    /// let reference: &mut Vec<u8> = buffer.get_mut();
     /// ```
     pub fn get_mut(&mut self) -> &mut W {
         &mut self.inner
@@ -1134,11 +1087,10 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::BufWriter;
     ///
-    /// let buf_writer = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// let buf_writer = BufWriter::new(Vec::new());
     ///
     /// // See how many bytes are currently buffered
     /// let bytes_buffered = buf_writer.buffer().len();
@@ -1165,11 +1117,10 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::BufWriter;
     ///
-    /// let buf_writer = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// let buf_writer = BufWriter::new(Vec::new());
     ///
     /// // Check the capacity of the inner buffer
     /// let capacity = buf_writer.capacity();
@@ -1190,14 +1141,12 @@ impl<W: Write> BufWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::io::BufWriter;
-    /// use std::net::TcpStream;
+    /// ```
+    /// use acid_io::BufWriter;
     ///
-    /// let mut buffer = BufWriter::new(TcpStream::connect("127.0.0.1:34254").unwrap());
+    /// let mut buffer = BufWriter::new(Vec::new());
     ///
-    /// // unwrap the TcpStream and flush the buffer
-    /// let stream = buffer.into_inner().unwrap();
+    /// let inner: Vec<u8> = buffer.into_inner().unwrap();
     /// ```
     pub fn into_inner(mut self) -> core::result::Result<W, IntoInnerError<BufWriter<W>>> {
         match self.flush_buf() {
@@ -1218,7 +1167,7 @@ impl<W: Write> BufWriter<W> {
     /// # Examples
     ///
     /// ```
-    /// use std::io::{BufWriter, Write};
+    /// use acid_io::{BufWriter, Write};
     ///
     /// let mut buffer = [0u8; 10];
     /// let mut stream = BufWriter::new(buffer.as_mut());
@@ -1347,13 +1296,13 @@ impl<W: Write> BufWriter<W> {
 /// # Example
 ///
 /// ```
-/// use std::io::{self, BufWriter, Write};
+/// use acid_io::{self, BufWriter, Write};
 /// use std::panic::{catch_unwind, AssertUnwindSafe};
 ///
 /// struct PanickingWriter;
 /// impl Write for PanickingWriter {
-///   fn write(&mut self, buf: &[u8]) -> io::Result<usize> { panic!() }
-///   fn flush(&mut self) -> io::Result<()> { panic!() }
+///   fn write(&mut self, buf: &[u8]) -> acid_io::Result<usize> { panic!() }
+///   fn flush(&mut self) -> acid_io::Result<()> { panic!() }
 /// }
 ///
 /// let mut stream = BufWriter::new(PanickingWriter);
@@ -1856,34 +1805,32 @@ impl<'a, W: Write> Write for LineWriterShim<'a, W> {
 /// We can use `LineWriter` to write one line at a time, significantly
 /// reducing the number of actual writes to the file.
 ///
-/// ```no_run
-/// use std::fs::{self, File};
-/// use std::io::prelude::*;
-/// use std::io::LineWriter;
+/// ```
+/// use acid_io::prelude::*;
+/// use acid_io::LineWriter;
 ///
-/// fn main() -> std::io::Result<()> {
+/// fn main() -> acid_io::Result<()> {
 ///     let road_not_taken = b"I shall be telling this with a sigh
 /// Somewhere ages and ages hence:
 /// Two roads diverged in a wood, and I -
 /// I took the one less traveled by,
 /// And that has made all the difference.";
 ///
-///     let file = File::create("poem.txt")?;
-///     let mut file = LineWriter::new(file);
+///     let mut writer = LineWriter::new(Vec::new());
 ///
-///     file.write_all(b"I shall be telling this with a sigh")?;
+///     writer.write_all(b"I shall be telling this with a sigh")?;
 ///
 ///     // No bytes are written until a newline is encountered (or
 ///     // the internal buffer is filled).
-///     assert_eq!(fs::read_to_string("poem.txt")?, "");
-///     file.write_all(b"\n")?;
+///     assert_eq!(writer.get_ref().as_slice(), &[]);
+///     writer.write_all(b"\n")?;
 ///     assert_eq!(
-///         fs::read_to_string("poem.txt")?,
-///         "I shall be telling this with a sigh\n",
+///         writer.get_ref().as_slice(),
+///         &b"I shall be telling this with a sigh\n"[..],
 ///     );
 ///
 ///     // Write the rest of the poem.
-///     file.write_all(b"Somewhere ages and ages hence:
+///     writer.write_all(b"Somewhere ages and ages hence:
 /// Two roads diverged in a wood, and I -
 /// I took the one less traveled by,
 /// And that has made all the difference.")?;
@@ -1891,10 +1838,11 @@ impl<'a, W: Write> Write for LineWriterShim<'a, W> {
 ///     // The last line of the poem doesn't end in a newline, so
 ///     // we have to flush or drop the `LineWriter` to finish
 ///     // writing.
-///     file.flush()?;
+///     writer.flush()?;
 ///
 ///     // Confirm the whole poem was written.
-///     assert_eq!(fs::read("poem.txt")?, &road_not_taken[..]);
+///     let written = writer.into_inner().unwrap();
+///     assert_eq!(written, &road_not_taken[..]);
 ///     Ok(())
 /// }
 /// ```
@@ -1907,13 +1855,12 @@ impl<W: Write> LineWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::fs::File;
-    /// use std::io::LineWriter;
+    /// ```
+    /// use acid_io::LineWriter;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let file = File::create("poem.txt")?;
-    ///     let file = LineWriter::new(file);
+    /// fn main() -> acid_io::Result<()> {
+    ///     let writer = LineWriter::new(Vec::new());
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -1927,13 +1874,11 @@ impl<W: Write> LineWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::fs::File;
-    /// use std::io::LineWriter;
+    /// ```
+    /// use acid_io::LineWriter;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let file = File::create("poem.txt")?;
-    ///     let file = LineWriter::with_capacity(100, file);
+    /// fn main() -> acid_io::Result<()> {
+    ///     let writer = LineWriter::with_capacity(100, Vec::new());
     ///     Ok(())
     /// }
     /// ```
@@ -1947,15 +1892,13 @@ impl<W: Write> LineWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::fs::File;
-    /// use std::io::LineWriter;
+    /// ```
+    /// use acid_io::LineWriter;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let file = File::create("poem.txt")?;
-    ///     let file = LineWriter::new(file);
+    /// fn main() -> acid_io::Result<()> {
+    ///     let writer = LineWriter::new(Vec::new());
     ///
-    ///     let reference = file.get_ref();
+    ///     let reference: &Vec<u8> = writer.get_ref();
     ///     Ok(())
     /// }
     /// ```
@@ -1970,16 +1913,14 @@ impl<W: Write> LineWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::fs::File;
-    /// use std::io::LineWriter;
+    /// ```
+    /// use acid_io::LineWriter;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let file = File::create("poem.txt")?;
-    ///     let mut file = LineWriter::new(file);
+    /// fn main() -> acid_io::Result<()> {
+    ///     let mut writer = LineWriter::new(Vec::new());
     ///
-    ///     // we can use reference just like file
-    ///     let reference = file.get_mut();
+    ///     // we can use reference just like writer
+    ///     let reference = writer.get_mut();
     ///     Ok(())
     /// }
     /// ```
@@ -1997,16 +1938,13 @@ impl<W: Write> LineWriter<W> {
     ///
     /// # Examples
     ///
-    /// ```no_run
-    /// use std::fs::File;
-    /// use std::io::LineWriter;
+    /// ```
+    /// use acid_io::LineWriter;
     ///
-    /// fn main() -> std::io::Result<()> {
-    ///     let file = File::create("poem.txt")?;
+    /// fn main() -> acid_io::Result<()> {
+    ///     let writer: LineWriter<Vec<u8>> = LineWriter::new(Vec::new());
     ///
-    ///     let writer: LineWriter<File> = LineWriter::new(file);
-    ///
-    ///     let file: File = writer.into_inner()?;
+    ///     let v: Vec<u8> = writer.into_inner()?;
     ///     Ok(())
     /// }
     /// ```
