@@ -222,7 +222,7 @@ fn cmp_bufread<Br1: BufRead, Br2: BufRead>(mut br1: Br1, mut br2: Br2, exp: &[u8
     }
     assert_eq!(br1.fill_buf().unwrap().len(), 0);
     assert_eq!(br2.fill_buf().unwrap().len(), 0);
-    assert_eq!(&cat[..], &exp[..])
+    assert_eq!(&cat[..], exp)
 }
 
 #[test]
