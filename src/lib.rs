@@ -40,8 +40,8 @@ pub use util::{copy, empty, repeat, sink, Empty, Repeat, Sink};
 #[cfg(feature = "std")]
 pub use std::io::{
     copy, empty, repeat, sink, BufRead, BufReader, BufWriter, Bytes, Cursor, Empty, Error,
-    ErrorKind, IntoInnerError, IoSlice, IoSliceMut, LineWriter, Lines, Lines, Read, Repeat, Result,
-    Seek, SeekFrom, Sink, Split, Split, Write,
+    ErrorKind, IntoInnerError, IoSlice, IoSliceMut, LineWriter, Lines, Read, Repeat, Result, Seek,
+    SeekFrom, Sink, Split, Write,
 };
 
 // Exact value copied from std::sys_common::io, which is not exposed publicly.
