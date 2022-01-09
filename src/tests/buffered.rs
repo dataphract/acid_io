@@ -7,9 +7,7 @@ use alloc::{
 };
 use core::{panic, str};
 
-use crate::{
-    prelude::*, BufReader, BufWriter, Cursor, Error, ErrorKind, IoSlice, LineWriter, SeekFrom,
-};
+use crate::{prelude::*, BufReader, BufWriter, Cursor, ErrorKind, IoSlice, LineWriter, SeekFrom};
 
 /// A dummy reader intended at testing short-reads propagation.
 pub struct ShortReader {
@@ -175,23 +173,6 @@ fn test_buffered_reader_stream_position() {
     assert_eq!(reader.buffer(), &[][..]);
 }
 
-// TODO(dataphract): catch_unwind requires std, so this can't compile.
-// #[test]
-// fn test_buffered_reader_stream_position_panic() {
-//     let inner: &[u8] = &[5, 6, 7, 0, 1, 2, 3, 4];
-//     let mut reader = BufReader::with_capacity(4, Cursor::new(inner));
-
-//     // cause internal buffer to be filled but read only partially
-//     let mut buffer = [0, 0];
-//     assert!(reader.read_exact(&mut buffer).is_ok());
-//     // rewinding the internal reader will cause buffer to loose sync
-//     let inner = reader.get_mut();
-//     assert!(inner.seek(SeekFrom::Start(0)).is_ok());
-//     // overflow when subtracting the remaining buffer size from current position
-//     let result = panic::catch_unwind(panic::AssertUnwindSafe(|| reader.stream_position().ok()));
-//     assert!(result.is_err());
-// }
-
 #[test]
 fn test_buffered_reader_invalidated_after_read() {
     let inner: &[u8] = &[5, 6, 7, 0, 1, 2, 3, 4];
@@ -295,9 +276,7 @@ fn test_buffered_reader_seek_underflow_discard_buffer_between_seeks() {
                 self.first_seek = false;
                 Ok(0)
             } else {
-                Err(Error {
-                    kind: ErrorKind::Other,
-                })
+                Err(ErrorKind::Other.into())
             }
         }
     }
@@ -494,9 +473,7 @@ fn dont_panic_in_drop_on_panicked_flush() {
             Ok(buf.len())
         }
         fn flush(&mut self) -> crate::Result<()> {
-            Err(Error {
-                kind: ErrorKind::Uncategorized,
-            })
+            Err(ErrorKind::Uncategorized.into())
         }
     }
 
@@ -507,35 +484,6 @@ fn dont_panic_in_drop_on_panicked_flush() {
     // abort.
     panic!();
 }
-
-// TODO(dataphract): thread::spawn requires std, so this can't compile.
-// #[test]
-// #[cfg_attr(target_os = "emscripten", ignore)]
-// fn panic_in_write_doesnt_flush_in_drop() {
-//     static WRITES: AtomicUsize = AtomicUsize::new(0);
-
-//     struct PanicWriter;
-
-//     impl Write for PanicWriter {
-//         fn write(&mut self, _: &[u8]) -> crate::Result<usize> {
-//             WRITES.fetch_add(1, Ordering::SeqCst);
-//             panic!();
-//         }
-//         fn flush(&mut self) -> crate::Result<()> {
-//             Ok(())
-//         }
-//     }
-
-//     std::thread::spawn(|| {
-//         let mut writer = BufWriter::new(PanicWriter);
-//         let _ = writer.write(b"hello world");
-//         let _ = writer.flush();
-//     })
-//     .join()
-//     .unwrap_err();
-
-//     assert_eq!(WRITES.load(Ordering::SeqCst), 1);
-// }
 
 /// A simple `Write` target, designed to be wrapped by `LineWriter` /
 /// `BufWriter` / etc, that can have its `write` & `flush` behavior
@@ -567,16 +515,12 @@ struct ProgrammableSink {
 impl Write for ProgrammableSink {
     fn write(&mut self, data: &[u8]) -> crate::Result<usize> {
         if self.always_write_error {
-            return Err(Error {
-                kind: ErrorKind::Other,
-            });
+            return Err(ErrorKind::Other.into());
         }
 
         match self.max_writes {
             Some(0) if self.error_after_max_writes => {
-                return Err(Error {
-                    kind: ErrorKind::Other,
-                });
+                return Err(ErrorKind::Other.into());
             }
             Some(0) => return Ok(0),
             Some(ref mut count) => *count -= 1,
@@ -596,9 +540,7 @@ impl Write for ProgrammableSink {
 
     fn flush(&mut self) -> crate::Result<()> {
         if self.always_flush_error {
-            Err(Error {
-                kind: ErrorKind::Other,
-            })
+            Err(ErrorKind::Other.into())
         } else {
             Ok(())
         }
@@ -683,101 +625,6 @@ fn line_vectored() {
     assert_eq!(a.write_vectored(&[IoSlice::new(b"a\nb"),]).unwrap(), 3);
     assert_eq!(a.get_ref(), b"\nabaca\nb");
 }
-
-// TODO(dataphract): thread::panicking requires std, so this can't compile.
-// #[test]
-// fn line_vectored_partial_and_errors() {
-//     enum Call {
-//         Write {
-//             inputs: Vec<&'static [u8]>,
-//             output: crate::Result<usize>,
-//         },
-//         Flush {
-//             output: crate::Result<()>,
-//         },
-//     }
-
-//     #[derive(Default)]
-//     struct Writer {
-//         calls: VecDeque<Call>,
-//     }
-
-//     impl Write for Writer {
-//         fn write(&mut self, buf: &[u8]) -> crate::Result<usize> {
-//             self.write_vectored(&[IoSlice::new(buf)])
-//         }
-
-//         fn write_vectored(&mut self, buf: &[IoSlice<'_>]) -> crate::Result<usize> {
-//             match self.calls.pop_front().expect("unexpected call to write") {
-//                 Call::Write { inputs, output } => {
-//                     assert_eq!(inputs, buf.iter().map(|b| &**b).collect::<Vec<_>>());
-//                     output
-//                 }
-//                 Call::Flush { .. } => panic!("unexpected call to write; expected a flush"),
-//             }
-//         }
-
-//         fn is_write_vectored(&self) -> bool {
-//             true
-//         }
-
-//         fn flush(&mut self) -> crate::Result<()> {
-//             match self.calls.pop_front().expect("Unexpected call to flush") {
-//                 Call::Flush { output } => output,
-//                 Call::Write { .. } => panic!("unexpected call to flush; expected a write"),
-//             }
-//         }
-//     }
-
-//     impl Drop for Writer {
-//         fn drop(&mut self) {
-//             if !thread::panicking() {
-//                 assert_eq!(self.calls.len(), 0);
-//             }
-//         }
-//     }
-
-//     // partial writes keep going
-//     let mut a = LineWriter::new(Writer::default());
-//     a.write_vectored(&[IoSlice::new(&[]), IoSlice::new(b"abc")])
-//         .unwrap();
-
-//     a.get_mut().calls.push_back(Call::Write {
-//         inputs: vec![b"abc"],
-//         output: Ok(1),
-//     });
-//     a.get_mut().calls.push_back(Call::Write {
-//         inputs: vec![b"bc"],
-//         output: Ok(2),
-//     });
-//     a.get_mut().calls.push_back(Call::Write {
-//         inputs: vec![b"x", b"\n"],
-//         output: Ok(2),
-//     });
-
-//     a.write_vectored(&[IoSlice::new(b"x"), IoSlice::new(b"\n")])
-//         .unwrap();
-
-//     a.get_mut().calls.push_back(Call::Flush { output: Ok(()) });
-//     a.flush().unwrap();
-
-//     // erroneous writes stop and don't write more
-//     a.get_mut().calls.push_back(Call::Write {
-//         inputs: vec![b"x", b"\na"],
-//         output: Err(err()),
-//     });
-//     a.get_mut().calls.push_back(Call::Flush { output: Ok(()) });
-//     assert!(a
-//         .write_vectored(&[IoSlice::new(b"x"), IoSlice::new(b"\na")])
-//         .is_err());
-//     a.flush().unwrap();
-
-//     fn err() -> Error {
-//         Error {
-//             kind: ErrorKind::Other,
-//         }
-//     }
-// }
 
 /// Test that, in cases where vectored writing is not enabled, the
 /// LineWriter uses the normal `write` call, which more-correctly handles

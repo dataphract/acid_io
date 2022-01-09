@@ -6,7 +6,7 @@ use alloc::{
 };
 use core::{cmp, ops::Deref};
 
-use crate::{BufRead, Cursor, Error, ErrorKind, IoSlice, IoSliceMut, Read, Result};
+use crate::{BufRead, Cursor, ErrorKind, IoSlice, IoSliceMut, Read, Result};
 #[cfg(feature = "alloc")]
 use crate::{BufReader, Seek, SeekFrom, Write};
 
@@ -182,16 +182,12 @@ fn take_eof() {
 
     impl Read for R {
         fn read(&mut self, _: &mut [u8]) -> Result<usize> {
-            Err(Error {
-                kind: ErrorKind::Other,
-            })
+            Err(ErrorKind::Other.into())
         }
     }
     impl BufRead for R {
         fn fill_buf(&mut self) -> Result<&[u8]> {
-            Err(Error {
-                kind: ErrorKind::Other,
-            })
+            Err(ErrorKind::Other.into())
         }
         fn consume(&mut self, _amt: usize) {}
     }

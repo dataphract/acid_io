@@ -7,109 +7,7 @@ use alloc::{string::String, vec::Vec};
 
 #[cfg(feature = "alloc")]
 use crate::{io_alloc, Lines, Split};
-use crate::{IoSlice, IoSliceMut};
-
-/// The error type for I/O operations of the [`Read`], [`Write`], [`Seek`], and
-/// associated traits.
-#[derive(Clone, Debug)]
-pub struct Error {
-    pub(crate) kind: ErrorKind,
-}
-
-impl Error {
-    /// Returns the corresponding [`ErrorKind`] for this error.
-    pub fn kind(&self) -> ErrorKind {
-        self.kind
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "I/O error")
-    }
-}
-
-/// A list specifying general categories of I/O error.
-///
-/// This list is intended to grow over time and it is not recommended to
-/// exhaustively match against it.
-///
-/// It is used with the [`acid_io::Error`][Error] type.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum ErrorKind {
-    /// This operation was interrupted.
-    ///
-    /// Interrupted operations can typically be retried.
-    Interrupted,
-    /// Data not valid for the operation were encountered.
-    ///
-    /// Unlike [`InvalidInput`], this typically means that the operation
-    /// parameters were valid, however the error was caused by malformed
-    /// input data.
-    ///
-    /// For example, a function that reads a file into a string will error with
-    /// `InvalidData` if the file's contents are not valid UTF-8.
-    ///
-    /// [`InvalidInput`]: ErrorKind::InvalidInput
-    InvalidData,
-    /// A parameter was incorrect.
-    InvalidInput,
-    /// An error returned when an operation could not be completed because an
-    /// “end of file” was reached prematurely.
-    ///
-    /// This typically means that an operation could only succeed if it read a
-    /// particular number of bytes but only a smaller number of bytes could be
-    /// read.
-    UnexpectedEof,
-    /// An error returned when an operation could not be completed because a
-    /// call to [`write`] returned [`Ok(0)`].
-    ///
-    /// This typically means that an operation could only succeed if it wrote a
-    /// particular number of bytes but only a smaller number of bytes could be
-    /// written.
-    ///
-    /// [`write`]: crate::Write::write
-    /// [`Ok(0)`]: Ok
-    WriteZero,
-    /// A custom error that does not fall under any other I/O error kind.
-    ///
-    /// This can be used to construct your own [`Error`]s that do not match any
-    /// [`ErrorKind`].
-    ///
-    /// This [`ErrorKind`] is not used by `acid_io`.
-    ///
-    /// Errors from the standard library that do not fall under any of the I/O
-    /// error kinds cannot be `match`ed on, and will only match a wildcard (`_`)
-    /// pattern.  New [`ErrorKind`]s might be added in the future for some of
-    /// those.
-    Other,
-    /// Any I/O error from `acid_io` that's not part of this list.
-    ///
-    /// Errors that are `Uncategorized` now may move to a different or a new
-    /// [`ErrorKind`] variant in the future. It is not recommended to match
-    /// an error against `Uncategorized`; use a wildcard match (`_`) instead.
-    #[doc(hidden)]
-    Uncategorized,
-}
-
-/// A specialized [`Result`] type for I/O operations.
-///
-/// This type is broadly used across `acid_io` for any operation which may
-/// produce an error.
-///
-/// This typedef is generally used to avoid writing out
-/// [`acid_io::Error`][Error] directly and is otherwise a direct mapping to
-/// [`Result`].
-///
-/// While usual Rust style is to import types directly, aliases of [`Result`]
-/// often are not, to make it easier to distinguish between them. [`Result`] is
-/// generally assumed to be [`core::result::Result`], and so users of this alias
-/// will generally use `acid_io::Result` instead of shadowing the [prelude]'s
-/// import of [`core::result::Result`].
-///
-/// [`io::Error`]: Error
-/// [prelude]: core::prelude
-pub type Result<T> = core::result::Result<T, Error>;
+use crate::{Error, ErrorKind, IoSlice, IoSliceMut, Result};
 
 // Read ==========================================================================================
 
@@ -137,9 +35,10 @@ pub(crate) fn default_read_exact<R: Read + ?Sized>(this: &mut R, mut buf: &mut [
         }
     }
     if !buf.is_empty() {
-        Err(Error {
-            kind: ErrorKind::UnexpectedEof,
-        })
+        Err(Error::new_const(
+            ErrorKind::UnexpectedEof,
+            &"failed to fill whole buffer",
+        ))
     } else {
         Ok(())
     }
@@ -939,9 +838,10 @@ impl Read for &[u8] {
     #[inline]
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
         if buf.len() > self.len() {
-            return Err(Error {
-                kind: ErrorKind::UnexpectedEof,
-            });
+            return Err(Error::new_const(
+                ErrorKind::UnexpectedEof,
+                &"failed to fill whole buffer",
+            ));
         }
         let (a, b) = self.split_at(buf.len());
 
@@ -1520,9 +1420,10 @@ pub trait Write {
         while !buf.is_empty() {
             match self.write(buf) {
                 Ok(0) => {
-                    return Err(Error {
-                        kind: ErrorKind::WriteZero,
-                    });
+                    return Err(Error::new_const(
+                        ErrorKind::WriteZero,
+                        &"failed to write whole buffer",
+                    ));
                 }
                 Ok(n) => buf = &buf[n..],
                 Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
@@ -1592,9 +1493,10 @@ pub trait Write {
         while !bufs.is_empty() {
             match self.write_vectored(bufs) {
                 Ok(0) => {
-                    return Err(Error {
-                        kind: ErrorKind::WriteZero,
-                    });
+                    return Err(Error::new_const(
+                        ErrorKind::WriteZero,
+                        &"failed to write whole buffer",
+                    ));
                 }
                 Ok(n) => IoSlice::advance_slices(&mut bufs, n),
                 Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
@@ -1669,9 +1571,10 @@ pub trait Write {
                 if output.error.is_err() {
                     output.error
                 } else {
-                    Err(Error {
-                        kind: ErrorKind::Uncategorized,
-                    })
+                    Err(Error::new_const(
+                        ErrorKind::Uncategorized,
+                        &"formatter error",
+                    ))
                 }
             }
         }
@@ -1743,9 +1646,10 @@ impl Write for &mut [u8] {
         if self.write(data)? == data.len() {
             Ok(())
         } else {
-            Err(Error {
-                kind: ErrorKind::WriteZero,
-            })
+            Err(Error::new_const(
+                ErrorKind::WriteZero,
+                &"failed to write whole buffer",
+            ))
         }
     }
 
@@ -2184,9 +2088,10 @@ where
                 self.pos = n;
                 Ok(self.pos)
             }
-            None => Err(Error {
-                kind: ErrorKind::InvalidInput,
-            }),
+            None => Err(Error::new_const(
+                ErrorKind::InvalidInput,
+                &"invalid seek to a negative or overflowing position",
+            )),
         }
     }
 
