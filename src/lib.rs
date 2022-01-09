@@ -7,6 +7,8 @@
 
 #[cfg(all(not(feature = "std"), feature = "byteorder"))]
 pub mod byteorder;
+#[cfg(not(feature = "std"))]
+mod error;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 mod io_alloc;
 #[cfg(not(feature = "std"))]
@@ -24,10 +26,12 @@ mod tests;
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc;
 
+#[cfg(not(feature = "std"))]
+pub use error::{Error, ErrorKind, ErrorTrait, Result};
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 pub use io_alloc::{BufReader, BufWriter, IntoInnerError, LineWriter, Lines, Split};
 #[cfg(not(feature = "std"))]
-pub use io_core::{BufRead, Cursor, Error, ErrorKind, Read, Result, Seek, SeekFrom, Write};
+pub use io_core::{BufRead, Cursor, Read, Seek, SeekFrom, Write};
 #[cfg(not(feature = "std"))]
 pub use io_slice::{IoSlice, IoSliceMut};
 #[cfg(not(feature = "std"))]

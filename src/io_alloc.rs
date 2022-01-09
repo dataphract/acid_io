@@ -197,9 +197,12 @@ where
     };
     let ret = f(g.buf);
     if str::from_utf8(&g.buf[g.len..]).is_err() {
-        ret.and(Err(Error {
-            kind: ErrorKind::InvalidData,
-        }))
+        ret.and_then(|_| {
+            Err(Error::new_const(
+                ErrorKind::InvalidData,
+                &"stream did not contain valid UTF-8",
+            ))
+        })
     } else {
         g.len = g.buf.len();
         ret
@@ -595,8 +598,11 @@ impl<R: Read> Read for BufReader<R> {
             // buffer.
             let mut bytes = Vec::new();
             self.read_to_end(&mut bytes)?;
-            let string = str::from_utf8(&bytes).map_err(|_| Error {
-                kind: ErrorKind::InvalidData,
+            let string = str::from_utf8(&bytes).map_err(|_| {
+                Error::new_const(
+                    ErrorKind::InvalidData,
+                    &"stream did not contain valid UTF-8",
+                )
             })?;
             *buf += string;
             Ok(string.len())
@@ -1028,9 +1034,10 @@ impl<W: Write> BufWriter<W> {
 
             match r {
                 Ok(0) => {
-                    return Err(Error {
-                        kind: ErrorKind::WriteZero,
-                    });
+                    return Err(Error::new_const(
+                        ErrorKind::WriteZero,
+                        &"failed to write the buffered data",
+                    ));
                 }
                 Ok(n) => guard.consume(n),
                 Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
@@ -2052,8 +2059,11 @@ impl Write for Vec<u8> {
 
 // Resizing write implementation
 fn vec_write(pos_mut: &mut u64, vec: &mut Vec<u8>, buf: &[u8]) -> Result<usize> {
-    let pos: usize = (*pos_mut).try_into().map_err(|_| Error {
-        kind: ErrorKind::InvalidInput,
+    let pos: usize = (*pos_mut).try_into().map_err(|_| {
+        Error::new_const(
+            ErrorKind::InvalidInput,
+            &"cursor position exceeds maximum possible vector length",
+        )
     })?;
     // Make sure the internal buffer is as least as big as where we
     // currently are
