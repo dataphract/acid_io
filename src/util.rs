@@ -21,10 +21,10 @@ pub struct Empty;
 /// A slightly sad example of not reading anything into a buffer:
 ///
 /// ```
-/// use std::io::{self, Read};
+/// use acid_io::Read;
 ///
 /// let mut buffer = String::new();
-/// io::empty().read_to_string(&mut buffer).unwrap();
+/// acid_io::empty().read_to_string(&mut buffer).unwrap();
 /// assert!(buffer.is_empty());
 /// ```
 #[must_use]
@@ -89,10 +89,10 @@ pub struct Repeat {
 /// # Examples
 ///
 /// ```
-/// use std::io::{self, Read};
+/// use acid_io::Read;
 ///
 /// let mut buffer = [0; 3];
-/// io::repeat(0b101).read_exact(&mut buffer).unwrap();
+/// acid_io::repeat(0b101).read_exact(&mut buffer).unwrap();
 /// assert_eq!(buffer, [0b101, 0b101, 0b101]);
 /// ```
 #[must_use]
@@ -242,13 +242,11 @@ impl fmt::Debug for Sink {
 /// # Examples
 ///
 /// ```
-/// use std::io;
-///
-/// fn main() -> io::Result<()> {
+/// fn main() -> acid_io::Result<()> {
 ///     let mut reader: &[u8] = b"hello";
 ///     let mut writer: Vec<u8> = vec![];
 ///
-///     io::copy(&mut reader, &mut writer)?;
+///     acid_io::copy(&mut reader, &mut writer)?;
 ///
 ///     assert_eq!(&b"hello"[..], &writer[..]);
 ///     Ok(())
@@ -289,7 +287,7 @@ pub(crate) fn stack_buffer_copy<R: Read + ?Sized, W: Write + ?Sized>(
             Err(ref e) if e.kind() == ErrorKind::Interrupted => continue,
             Err(e) => return Err(e),
         };
-        writer.write_all(&buf)?;
+        writer.write_all(&buf[..len])?;
         written += len as u64;
     }
 }

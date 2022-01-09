@@ -595,11 +595,11 @@ impl From<ErrorKind> for Error {
     /// # Examples
     ///
     /// ```
-    /// use std::io::{Error, ErrorKind};
+    /// use acid_io::{Error, ErrorKind};
     ///
-    /// let not_found = ErrorKind::NotFound;
-    /// let error = Error::from(not_found);
-    /// assert_eq!("entity not found", format!("{}", error));
+    /// let invalid_data = ErrorKind::InvalidData;
+    /// let error = Error::from(invalid_data);
+    /// assert_eq!("invalid data", format!("{}", error));
     /// ```
     #[inline]
     fn from(kind: ErrorKind) -> Error {

@@ -5,7 +5,7 @@
 //!
 //! ```
 //! # #![allow(unused_imports)]
-//! use std::io::prelude::*;
+//! use acid_io::prelude::*;
 //! ```
 
 pub use super::{BufRead, Read, Seek, Write};
