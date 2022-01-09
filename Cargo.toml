@@ -7,7 +7,7 @@ edition = "2021"
 default = []
 
 # byteorder/std should be a weak dependency feature once rust-lang/cargo#8832 is stabilized.
-std = ["alloc", "byteorder/std"]
+std = ["byteorder/std"]
 alloc = []
 
 [dependencies]

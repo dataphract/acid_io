@@ -37,6 +37,8 @@ pub use io_slice::{IoSlice, IoSliceMut};
 #[cfg(not(feature = "std"))]
 pub use util::{copy, empty, repeat, sink, Empty, Repeat, Sink};
 
+#[cfg(all(feature = "std", feature = "byteorder"))]
+pub use byteorder;
 #[cfg(feature = "std")]
 pub use std::io::{
     copy, empty, repeat, sink, BufRead, BufReader, BufWriter, Bytes, Cursor, Empty, Error,
