@@ -21,11 +21,14 @@ pub struct Empty;
 /// A slightly sad example of not reading anything into a buffer:
 ///
 /// ```
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// use acid_io::Read;
 ///
 /// let mut buffer = String::new();
 /// acid_io::empty().read_to_string(&mut buffer).unwrap();
 /// assert!(buffer.is_empty());
+/// # }
 /// ```
 #[must_use]
 pub const fn empty() -> Empty {
@@ -242,6 +245,9 @@ impl fmt::Debug for Sink {
 /// # Examples
 ///
 /// ```
+/// # #[cfg(not(feature = "alloc"))]
+/// # fn main() {}
+/// # #[cfg(feature = "alloc")]
 /// fn main() -> acid_io::Result<()> {
 ///     let mut reader: &[u8] = b"hello";
 ///     let mut writer: Vec<u8> = vec![];
