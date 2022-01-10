@@ -1,3 +1,4 @@
+#![doc(html_root_url = "https://docs.rs/acid_io/0.1.0")]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 

@@ -1,7 +1,14 @@
 [package]
 name = "acid_io"
+description = "A pared-down version of std::io usable with no_std"
 version = "0.1.0"
 edition = "2021"
+
+authors = ["The Rust Project Developers", "dataphract"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/dataphract/acid_io.git"
+keywords = ["io", "no_std", "core"]
+categories = ["no-std"]
 
 [features]
 default = []
