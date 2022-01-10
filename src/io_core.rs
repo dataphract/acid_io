@@ -525,6 +525,9 @@ pub trait Read {
     /// returns. Any bytes which have already been read will be appended to
     /// `buf`.
     ///
+    /// [`read()`]: Read::read
+    /// [`Ok(0)`]: core::result::Result::Ok
+    ///
     /// # Examples
     ///
     /// ```
@@ -680,9 +683,7 @@ pub trait Read {
     /// # Examples
     ///
     /// [`Item`]: Iterator::Item
-    /// [`File`]: crate::fs::File "fs::File"
-    /// [Result]: crate::result::Result "Result"
-    /// [Error]: Error
+    /// [Result]: crate::Result
     ///
     /// ```
     /// use acid_io::prelude::*;
@@ -711,10 +712,6 @@ pub trait Read {
     /// output of `next`.
     ///
     /// # Examples
-    ///
-    /// [`File`]s implement `Read`:
-    ///
-    /// [`File`]: crate::fs::File
     ///
     /// ```
     /// use acid_io::prelude::*;
@@ -878,10 +875,6 @@ impl Read for &[u8] {
 /// A `BufRead` is a type of `Read`er which has an internal buffer, allowing it
 /// to perform extra ways of reading.
 ///
-/// For example, reading line-by-line is inefficient without using a buffer, so
-/// if you want to read by line, you'll need `BufRead`, which includes a
-/// [`read_line`] method as well as a [`lines`] iterator.
-///
 /// # Examples
 ///
 /// In-memory buffers implement `BufRead`:
@@ -901,6 +894,8 @@ impl Read for &[u8] {
 ///
 /// If you have something that implements [`Read`], you can use the [`BufReader`
 /// type][`BufReader`] to turn it into a `BufRead`.
+///
+/// [`BufReader`]: crate::BufReader
 pub trait BufRead {
     /// Returns the contents of the internal buffer, filling it with more data
     /// from the inner reader if it is empty.

@@ -275,12 +275,11 @@ impl<B: BufRead> Iterator for Lines<B> {
 /// The `BufReader<R>` struct adds buffering to any reader.
 ///
 /// It can be excessively inefficient to work directly with a [`Read`] instance.
-/// For example, every call to [`read`][`TcpStream::read`] on [`TcpStream`]
-/// results in a system call. A `BufReader<R>` performs large, infrequent reads on
-/// the underlying [`Read`] and maintains an in-memory buffer of the results.
+/// A `BufReader<R>` performs large, infrequent reads on the underlying [`Read`]
+/// and maintains an in-memory buffer of the results.
 ///
 /// `BufReader<R>` can improve the speed of programs that make *small* and
-/// *repeated* read calls to the same file or network socket. It does not
+/// *repeated* read calls to the same `Read` instance. It does not
 /// help when reading very large amounts at once, or reading just one or a few
 /// times. It also provides no advantage when reading from a source that is
 /// already in memory, like a <code>[Vec]\<u8></code>.
@@ -290,9 +289,6 @@ impl<B: BufRead> Iterator for Lines<B> {
 /// stream can cause data loss. Reading from the underlying reader after
 /// unwrapping the `BufReader<R>` with [`BufReader::into_inner`] can also cause
 /// data loss.
-///
-/// [`TcpStream::read`]: std::net::TcpStream::read
-/// [`TcpStream`]: std::net::TcpStream
 ///
 /// # Examples
 ///
@@ -911,16 +907,14 @@ impl<W> fmt::Display for IntoInnerError<W> {
 /// Wraps a writer and buffers its output.
 ///
 /// It can be excessively inefficient to work directly with something that
-/// implements [`Write`]. For example, every call to
-/// [`write`][`TcpStream::write`] on [`TcpStream`] results in a system call. A
-/// `BufWriter<W>` keeps an in-memory buffer of data and writes it to an underlying
-/// writer in large, infrequent batches.
+/// implements [`Write`]. A `BufWriter<W>` keeps an in-memory buffer of data and
+/// writes it to an underlying writer in large, infrequent batches.
 ///
 /// `BufWriter<W>` can improve the speed of programs that make *small* and
-/// *repeated* write calls to the same file or network socket. It does not
-/// help when writing very large amounts at once, or writing just one or a few
-/// times. It also provides no advantage when writing to a destination that is
-/// in memory, like a <code>[Vec]\<u8></code>.
+/// *repeated* write calls to the same `Write` instance. It does not help when
+/// writing very large amounts at once, or writing just one or a few times. It
+/// also provides no advantage when writing to a destination that is in memory,
+/// like a <code>[Vec]\<u8></code>.
 ///
 /// It is critical to call [`flush`] before `BufWriter<W>` is dropped. Though
 /// dropping will attempt to flush the contents of the buffer, any errors
@@ -928,9 +922,6 @@ impl<W> fmt::Display for IntoInnerError<W> {
 /// ensures that the buffer is empty and thus dropping will not even attempt
 /// file operations.
 ///
-// HACK(#78696): can't use `crate` for associated items
-/// [`TcpStream::write`]: super::super::super::net::TcpStream::write
-/// [`TcpStream`]: crate::net::TcpStream
 /// [`flush`]: BufWriter::flush
 pub struct BufWriter<W: Write> {
     inner: W,

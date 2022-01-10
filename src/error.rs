@@ -33,6 +33,8 @@ struct Custom {
 }
 
 /// A trait providing a subset of [`std::error::Error`]'s functionality.
+///
+/// [`std::error::Error`]: https://doc.rust-lang.org/stable/std/io/struct.Error.html
 pub trait ErrorTrait: fmt::Debug + fmt::Display {
     /// The lower-level source of this error, if any.
     ///
