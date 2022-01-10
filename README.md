@@ -2,6 +2,8 @@
 
 A pared-down version of Rust's [`std::io`] usable in `no_std` contexts.
 
+[`std::io`]: https://doc.rust-lang.org/std/io/index.html
+
 ---
 
 Rust's `std::io` provides common interfaces that are used widely in the Rust
@@ -83,6 +85,3 @@ at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
-
-[tinyvg/examples]: https://github.com/TinyVG/examples
-[mit-tinyvg]: https://github.com/TinyVG/examples/blob/b8d8c7e88ed221f2ce1100f9e25b5c6e7e6dc78d/LICENSE
