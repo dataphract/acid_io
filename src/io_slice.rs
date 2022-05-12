@@ -5,8 +5,27 @@ use core::{
     slice,
 };
 
-#[cfg(not(windows))]
+#[cfg(unix)]
 use libc::{c_void, iovec};
+
+// ----
+// c_void and iovec for bare metal targets
+#[cfg(not(any(unix, windows)))]
+#[repr(u8)]
+#[derive(Clone, Copy)]
+enum c_void {
+    #[doc(hidden)]
+    __variant1,
+    #[doc(hidden)]
+    __variant2,
+}
+#[cfg(not(any(unix, windows)))]
+#[derive(Clone, Copy)]
+struct iovec {
+    pub iov_base: *mut c_void,
+    pub iov_len: usize,
+}
+// ----
 
 #[cfg(not(windows))]
 #[repr(transparent)]
