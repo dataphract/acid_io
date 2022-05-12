@@ -5,14 +5,14 @@ use core::{
     slice,
 };
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 use libc::{c_void, iovec};
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 #[repr(transparent)]
 struct RawIoSliceMut<'a>(iovec, PhantomData<&'a mut [u8]>);
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 impl<'a> RawIoSliceMut<'a> {
     #[inline]
     fn new(buf: &'a mut [u8]) -> RawIoSliceMut<'a> {
@@ -52,12 +52,12 @@ impl<'a> RawIoSliceMut<'a> {
     }
 }
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct RawIoSlice<'a>(iovec, PhantomData<&'a [u8]>);
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 impl<'a> RawIoSlice<'a> {
     #[inline]
     fn new(buf: &'a [u8]) -> RawIoSlice<'a> {
