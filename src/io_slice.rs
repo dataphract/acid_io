@@ -8,11 +8,30 @@ use core::{
 #[cfg(unix)]
 use libc::{c_void, iovec};
 
-#[cfg(unix)]
+// ----
+// c_void and iovec for bare metal targets
+#[cfg(not(any(unix, windows)))]
+#[repr(u8)]
+#[derive(Clone, Copy)]
+enum c_void {
+    #[doc(hidden)]
+    __variant1,
+    #[doc(hidden)]
+    __variant2,
+}
+#[cfg(not(any(unix, windows)))]
+#[derive(Clone, Copy)]
+struct iovec {
+    pub iov_base: *mut c_void,
+    pub iov_len: usize,
+}
+// ----
+
+#[cfg(not(windows))]
 #[repr(transparent)]
 struct RawIoSliceMut<'a>(iovec, PhantomData<&'a mut [u8]>);
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 impl<'a> RawIoSliceMut<'a> {
     #[inline]
     fn new(buf: &'a mut [u8]) -> RawIoSliceMut<'a> {
@@ -52,12 +71,12 @@ impl<'a> RawIoSliceMut<'a> {
     }
 }
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct RawIoSlice<'a>(iovec, PhantomData<&'a [u8]>);
 
-#[cfg(unix)]
+#[cfg(not(windows))]
 impl<'a> RawIoSlice<'a> {
     #[inline]
     fn new(buf: &'a [u8]) -> RawIoSlice<'a> {
