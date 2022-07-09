@@ -349,8 +349,7 @@ impl<T: Read, U: Read> Read for Chain<T, U> {
 
         (
             min1 + min2,
-            max1.map(|x| max2.map(|y| x.checked_add(y)).flatten())
-                .flatten(),
+            max1.and_then(|x| max2.and_then(|y| x.checked_add(y))),
         )
     }
 }
