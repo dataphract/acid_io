@@ -1747,6 +1747,21 @@ pub trait Seek {
     }
 }
 
+impl<'a, T: Seek> Seek for &'a mut T {
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
+        T::seek(self, pos)
+    }
+    fn rewind(&mut self) -> Result<()> {
+        T::rewind(self)
+    }
+    fn stream_len(&mut self) -> Result<u64> {
+        T::stream_len(self)
+    }
+    fn stream_position(&mut self) -> Result<u64> {
+        T::stream_position(self)
+    }
+}
+
 // Cursor ========================================================================================
 
 /// A `Cursor` wraps an in-memory buffer and provides it with a
