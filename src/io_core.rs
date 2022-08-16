@@ -785,16 +785,14 @@ pub trait Read {
     }
 }
 
-impl<R: Read> Read for &mut R {
+impl<R: Read + ?Sized> Read for &mut R {
     fn read(&mut self, dst: &mut [u8]) -> Result<usize> {
-        (*self).read(dst)
+        R::read(self, dst)
     }
-
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
-        (*self).read_exact(buf)
+        R::read_exact(self, buf)
     }
 }
-
 impl Read for &[u8] {
     #[inline]
     fn read(&mut self, dst: &mut [u8]) -> Result<usize> {
@@ -1744,6 +1742,21 @@ pub trait Seek {
     /// This is equivalent to `self.seek(SeekFrom::Current(0))`.
     fn stream_position(&mut self) -> Result<u64> {
         self.seek(SeekFrom::Current(0))
+    }
+}
+
+impl<T: Seek + ?Sized> Seek for &mut T {
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
+        T::seek(self, pos)
+    }
+    fn rewind(&mut self) -> Result<()> {
+        T::rewind(self)
+    }
+    fn stream_len(&mut self) -> Result<u64> {
+        T::stream_len(self)
+    }
+    fn stream_position(&mut self) -> Result<u64> {
+        T::stream_position(self)
     }
 }
 
