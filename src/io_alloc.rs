@@ -2004,13 +2004,27 @@ where
     }
 }
 
-impl<R: Read> Read for Box<R> {
+impl<R: Read + ?Sized> Read for Box<R> {
     fn read(&mut self, dst: &mut [u8]) -> Result<usize> {
-        (**self).read(dst)
+        R::read(self, dst)
     }
-
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
-        (**self).read_exact(buf)
+        R::read_exact(self, buf)
+    }
+}
+
+impl<T: Seek + ?Sized> Seek for Box<T> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
+        T::seek(self, pos)
+    }
+    fn rewind(&mut self) -> Result<()> {
+        T::rewind(self)
+    }
+    fn stream_len(&mut self) -> Result<u64> {
+        T::stream_len(self)
+    }
+    fn stream_position(&mut self) -> Result<u64> {
+        T::stream_position(self)
     }
 }
 

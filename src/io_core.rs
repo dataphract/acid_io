@@ -785,16 +785,14 @@ pub trait Read {
     }
 }
 
-impl<R: Read> Read for &mut R {
+impl<R: Read + ?Sized> Read for &mut R {
     fn read(&mut self, dst: &mut [u8]) -> Result<usize> {
-        (*self).read(dst)
+        R::read(self, dst)
     }
-
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<()> {
-        (*self).read_exact(buf)
+        R::read_exact(self, buf)
     }
 }
-
 impl Read for &[u8] {
     #[inline]
     fn read(&mut self, dst: &mut [u8]) -> Result<usize> {
@@ -1747,7 +1745,7 @@ pub trait Seek {
     }
 }
 
-impl<'a, T: Seek> Seek for &'a mut T {
+impl<T: Seek + ?Sized> Seek for &mut T {
     fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
         T::seek(self, pos)
     }
